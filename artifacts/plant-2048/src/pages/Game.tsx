@@ -15,6 +15,7 @@ import { Board } from "@/components/Board";
 import { Header } from "@/components/Header";
 import { Modal } from "@/components/Modal";
 import { GameEndModal } from "@/components/GameEndModal";
+import { TileStagePanel } from "@/components/TileStagePanel";
 import { PlayerData } from "@/utils/playerData";
 import { ApplyXpResult } from "@/hooks/usePlayer";
 
@@ -115,13 +116,8 @@ export default function Game({ themeId, player, onEarnXp, onHome }: GameProps) {
   return (
     <div className="min-h-[100dvh] w-full flex flex-col items-center bg-background">
 
-      {/* ── 광고 placeholder (상단) ─────────────────────── */}
-      <div
-        className="w-full h-12 bg-board/60 border-b border-dashed border-board flex items-center justify-center text-[11px] text-foreground/20 font-medium select-none"
-        aria-hidden="true"
-      >
-        AD
-      </div>
+      {/* ── 상단 타일 단계 패널 ──────────────────────────── */}
+      <TileStagePanel highestTile={highestTile} variant="top" />
 
       {/* ── 메인 콘텐츠 ──────────────────────────────────── */}
       <div className="w-full max-w-[500px] flex flex-col flex-1 px-4 pb-4">
@@ -144,13 +140,8 @@ export default function Game({ themeId, player, onEarnXp, onHome }: GameProps) {
           />
         </main>
 
-        {/* ── 광고 placeholder (하단) ─────────────────────── */}
-        <div
-          className="mt-4 w-full h-12 rounded-xl bg-board/60 border border-dashed border-board flex items-center justify-center text-[11px] text-foreground/20 font-medium select-none"
-          aria-hidden="true"
-        >
-          AD
-        </div>
+        {/* ── 하단 타일 단계 패널 ──────────────────────────── */}
+        <TileStagePanel highestTile={highestTile} variant="bottom" />
 
       </div>
 
