@@ -61,28 +61,41 @@ Every package extends `tsconfig.base.json` which sets `composite: true`. The roo
 **파일 구조:**
 ```
 src/
-├── App.tsx                  # 화면 전환 컨테이너 (슬라이딩 트랙)
+├── App.tsx                  # 화면 전환 컨테이너 + usePlayer 루트 관리
 ├── hooks/
 │   ├── useAppState.ts       # 화면 상태(front/game), 테마 선택 상태
-│   └── useGame.ts           # 게임 로직 (이동, 합치기, 점수, 로컬스토리지)
+│   ├── useGame.ts           # 게임 로직 (이동, 합치기, 점수, highestTile)
+│   └── usePlayer.ts         # 플레이어 레벨/XP/코인 상태 + localStorage 동기화
 ├── utils/
 │   ├── gameUtils.ts         # 순수 함수: 보드 이동/합치기/승패 체크
-│   └── themes.ts            # 테마 데이터 (plant/animal/weather/landscape)
+│   ├── themes.ts            # 테마 데이터 (plant/animal/weather/landscape)
+│   ├── playerData.ts        # PlayerData 타입, XP 공식, 레벨 보상 테이블, applyXp
+│   └── adService.ts         # 광고 Mock 서비스 (watchAd, isAdAvailable)
 ├── components/
-│   ├── FrontScreen.tsx      # 진입 화면 (테마선택, 게임시작 버튼, 광고 placeholder)
+│   ├── FrontScreen.tsx      # 진입 화면 (레벨바, 테마선택, 게임시작, 광고)
 │   ├── Board.tsx            # 4x4 게임 보드 + 터치 스와이프 처리
 │   ├── Tile.tsx             # 타일 렌더링 + 등장/합치기 애니메이션
-│   ├── Header.tsx           # 홈 버튼, 테마 뱃지, 점수, 새게임 버튼
-│   └── Modal.tsx            # 재사용 모달 (승리/게임오버/확인)
+│   ├── Header.tsx           # 홈 버튼, 테마 뱃지, 레벨바(small), 점수, 새게임
+│   ├── LevelBar.tsx         # 레벨 + XP 진행 바 (size: large|small)
+│   ├── GameEndModal.tsx     # 게임 종료 모달 (XP 내역, 광고 2x, 레벨업 표시)
+│   └── Modal.tsx            # 재사용 모달 (확인/취소)
 └── pages/
     └── Game.tsx             # 게임 화면 페이지 (보드 + 모달 조합)
 ```
+
+**레벨 시스템:**
+- XP 공식: 기본10 + floor(점수/40) + floor(log2(최고타일)×3) + 2048달성50
+- 레벨업 필요 XP: 60 + (현재레벨-1) × 25
+- 게임 종료 시 `GameEndModal`에서 XP 확인 후 지급
+- "광고 보고 XP 2배" mock 버튼 — `adService.ts` 내부만 교체해 실 SDK 연결 가능
+- 레벨업 시 `LEVEL_REWARDS` 테이블에서 코인 지급
 
 **테마 확장 방법:** `themes.ts`의 `THEMES` 객체에 새 테마 추가 후 `available: true` 설정
 
 **localStorage 키:**
 - `plant2048_bestScore` — 최고 점수
 - `plant2048_selectedTheme` — 마지막 선택 테마
+- `plant2048_player` — 플레이어 데이터 (level, xp, totalXp, coins)
 
 ---
 
