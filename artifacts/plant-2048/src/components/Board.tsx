@@ -1,3 +1,12 @@
+/* ============================================================
+ * Board.tsx
+ * 4×4 게임 보드 컴포넌트
+ *
+ * - 빈 셀 배경 그리드
+ * - 활성 타일 + 사라지는 타일(그레이브야드) 렌더링
+ * - 터치 스와이프 이벤트 처리
+ * ============================================================ */
+
 import { useRef, useEffect } from "react";
 import { Tile } from "./Tile";
 import { TileData } from "@/utils/gameUtils";
@@ -5,86 +14,84 @@ import { TileData } from "@/utils/gameUtils";
 interface BoardProps {
   tiles: TileData[];
   graveyard: TileData[];
-  onSwipe: (dir: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT') => void;
+  onSwipe: (dir: "UP" | "DOWN" | "LEFT" | "RIGHT") => void;
+  themeId?: string;
 }
 
-export function Board({ tiles, graveyard, onSwipe }: BoardProps) {
+export function Board({ tiles, graveyard, onSwipe, themeId = "plant" }: BoardProps) {
   const boardRef = useRef<HTMLDivElement>(null);
 
-  // Swipe handling
+  /* ── 터치 스와이프 처리 ─────────────────────────────── */
   useEffect(() => {
     const el = boardRef.current;
     if (!el) return;
 
-    let touchStartX = 0;
-    let touchStartY = 0;
+    let startX = 0;
+    let startY = 0;
 
-    const handleTouchStart = (e: TouchEvent) => {
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
-      // We don't preventDefault here to allow tap/click
+    const onTouchStart = (e: TouchEvent) => {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
     };
 
-    const handleTouchMove = (e: TouchEvent) => {
-      // Prevent scrolling while swiping on the board
+    /* 보드 위에서는 페이지 스크롤 방지 */
+    const onTouchMove = (e: TouchEvent) => {
       e.preventDefault();
     };
 
-    const handleTouchEnd = (e: TouchEvent) => {
-      if (!touchStartX || !touchStartY) return;
+    const onTouchEnd = (e: TouchEvent) => {
+      if (!startX || !startY) return;
 
-      const touchEndX = e.changedTouches[0].clientX;
-      const touchEndY = e.changedTouches[0].clientY;
-
-      const dx = touchEndX - touchStartX;
-      const dy = touchEndY - touchStartY;
+      const dx = e.changedTouches[0].clientX - startX;
+      const dy = e.changedTouches[0].clientY - startY;
       const absDx = Math.abs(dx);
       const absDy = Math.abs(dy);
 
-      // Minimum swipe distance
+      /* 최소 스와이프 거리: 40px */
       if (Math.max(absDx, absDy) > 40) {
         if (absDx > absDy) {
-          onSwipe(dx > 0 ? 'RIGHT' : 'LEFT');
+          onSwipe(dx > 0 ? "RIGHT" : "LEFT");
         } else {
-          onSwipe(dy > 0 ? 'DOWN' : 'UP');
+          onSwipe(dy > 0 ? "DOWN" : "UP");
         }
       }
-      
-      touchStartX = 0;
-      touchStartY = 0;
+
+      startX = 0;
+      startY = 0;
     };
 
-    el.addEventListener('touchstart', handleTouchStart, { passive: true });
-    el.addEventListener('touchmove', handleTouchMove, { passive: false });
-    el.addEventListener('touchend', handleTouchEnd, { passive: true });
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchmove", onTouchMove, { passive: false });
+    el.addEventListener("touchend", onTouchEnd, { passive: true });
 
     return () => {
-      el.removeEventListener('touchstart', handleTouchStart);
-      el.removeEventListener('touchmove', handleTouchMove);
-      el.removeEventListener('touchend', handleTouchEnd);
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+      el.removeEventListener("touchend", onTouchEnd);
     };
   }, [onSwipe]);
 
   return (
     <div className="relative w-full max-w-[500px] aspect-square mx-auto">
-      {/* Board Background container */}
-      <div 
+      <div
         ref={boardRef}
         className="absolute inset-0 bg-board rounded-2xl p-[var(--board-gap)] shadow-inner touch-none"
       >
-        {/* Empty Cells Background Grid */}
+        {/* 빈 셀 배경 그리드 */}
         <div className="grid grid-cols-4 grid-rows-4 w-full h-full gap-[var(--board-gap)]">
           {Array.from({ length: 16 }).map((_, i) => (
             <div key={`cell-${i}`} className="bg-cell rounded-xl md:rounded-2xl" />
           ))}
         </div>
 
-        {/* Active Tiles */}
-        {graveyard.map(tile => (
-          <Tile key={tile.id} data={tile} isGhost />
+        {/* 합쳐지는 중인 타일 (뒤에 렌더, z-0) */}
+        {graveyard.map((tile) => (
+          <Tile key={tile.id} data={tile} themeId={themeId} isGhost />
         ))}
-        {tiles.map(tile => (
-          <Tile key={tile.id} data={tile} />
+
+        {/* 활성 타일 */}
+        {tiles.map((tile) => (
+          <Tile key={tile.id} data={tile} themeId={themeId} />
         ))}
       </div>
     </div>

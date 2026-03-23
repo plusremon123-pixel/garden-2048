@@ -53,8 +53,11 @@
 
 @layer base {
   body {
-    @apply bg-background text-foreground antialiased font-sans overflow-x-hidden;
-    touch-action: pan-y; /* Allow vertical scrolling normally, but we will prevent it on the game board */
+    @apply bg-background text-foreground antialiased font-sans;
+    /* 화면 전환 시 가로 스크롤바 방지 */
+    overflow-x: hidden;
+    overflow-y: hidden;
+    height: 100dvh;
   }
 
   h1, h2, h3, h4, h5, h6 {

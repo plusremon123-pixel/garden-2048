@@ -48,6 +48,44 @@ Every package extends `tsconfig.base.json` which sets `composite: true`. The roo
 - `pnpm run build` — runs `typecheck` first, then recursively runs `build` in all packages that define it
 - `pnpm run typecheck` — runs `tsc --build --emitDeclarationOnly` using project references
 
+## Artifacts
+
+### `artifacts/plant-2048` (`@workspace/plant-2048`)
+
+식물 테마 2048 퍼즐 게임. 순수 프론트엔드 (백엔드 없음).
+
+**화면 구조:**
+- `FrontScreen` → `GameScreen` (슬라이드 전환, 350ms)
+- `App.tsx`: `useAppState` 훅으로 화면 전환 + 테마 선택 상태 관리
+
+**파일 구조:**
+```
+src/
+├── App.tsx                  # 화면 전환 컨테이너 (슬라이딩 트랙)
+├── hooks/
+│   ├── useAppState.ts       # 화면 상태(front/game), 테마 선택 상태
+│   └── useGame.ts           # 게임 로직 (이동, 합치기, 점수, 로컬스토리지)
+├── utils/
+│   ├── gameUtils.ts         # 순수 함수: 보드 이동/합치기/승패 체크
+│   └── themes.ts            # 테마 데이터 (plant/animal/weather/landscape)
+├── components/
+│   ├── FrontScreen.tsx      # 진입 화면 (테마선택, 게임시작 버튼, 광고 placeholder)
+│   ├── Board.tsx            # 4x4 게임 보드 + 터치 스와이프 처리
+│   ├── Tile.tsx             # 타일 렌더링 + 등장/합치기 애니메이션
+│   ├── Header.tsx           # 홈 버튼, 테마 뱃지, 점수, 새게임 버튼
+│   └── Modal.tsx            # 재사용 모달 (승리/게임오버/확인)
+└── pages/
+    └── Game.tsx             # 게임 화면 페이지 (보드 + 모달 조합)
+```
+
+**테마 확장 방법:** `themes.ts`의 `THEMES` 객체에 새 테마 추가 후 `available: true` 설정
+
+**localStorage 키:**
+- `plant2048_bestScore` — 최고 점수
+- `plant2048_selectedTheme` — 마지막 선택 테마
+
+---
+
 ## Packages
 
 ### `artifacts/api-server` (`@workspace/api-server`)
