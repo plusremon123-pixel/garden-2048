@@ -1,0 +1,146 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap');
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: 'Noto Sans KR', sans-serif;
+  --font-display: 'Fredoka', sans-serif;
+
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-board: hsl(var(--board));
+  --color-cell: hsl(var(--cell));
+  
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-primary-hover: hsl(var(--primary-hover));
+
+  /* Plant Theme Tile Colors */
+  --color-tile-2: hsl(138 76% 97%);
+  --color-tile-4: hsl(141 79% 93%);
+  --color-tile-8: hsl(142 76% 85%);
+  --color-tile-16: hsl(142 71% 73%);
+  --color-tile-32: hsl(142 72% 64%);
+  --color-tile-64: hsl(142 76% 46%);
+  --color-tile-128: hsl(142 76% 36%);
+  --color-tile-256: hsl(142 72% 29%);
+  --color-tile-512: hsl(142 64% 24%);
+  --color-tile-1024: hsl(45 93% 50%);
+  --color-tile-2048: hsl(38 92% 44%);
+  
+  --color-text-dark: hsl(142 64% 14%);
+  --color-text-light: hsl(0 0% 100%);
+}
+
+:root {
+  --background: 140 30% 98%;
+  --foreground: 142 64% 14%;
+  
+  --board: 142 20% 86%;
+  --cell: 142 25% 78%;
+  
+  --primary: 142 76% 36%;
+  --primary-foreground: 0 0% 100%;
+  --primary-hover: 142 72% 29%;
+  
+  --board-gap: 0.75rem;
+}
+
+@media (max-width: 640px) {
+  :root {
+    --board-gap: 0.5rem;
+  }
+}
+
+@layer base {
+  body {
+    @apply bg-background text-foreground antialiased font-sans overflow-x-hidden;
+    touch-action: pan-y; /* Allow vertical scrolling normally, but we will prevent it on the game board */
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    @apply font-bold tracking-tight;
+  }
+}
+
+@layer components {
+  .btn-cute {
+    @apply px-5 py-3 rounded-2xl font-bold transition-all duration-200 ease-out active:scale-95 shadow-sm hover:shadow-md select-none;
+  }
+  
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary-hover;
+  }
+  
+  .btn-secondary {
+    @apply bg-board text-foreground hover:bg-cell;
+  }
+}
+
+/* 
+  Tile Positioning & Animation System
+  Using CSS calc and variables injected via React style prop 
+  (--x and --y represent grid coordinates 0-3)
+*/
+.tile-wrapper {
+  position: absolute;
+  top: var(--board-gap);
+  left: var(--board-gap);
+  width: calc((100% - (var(--board-gap) * 5)) / 4);
+  height: calc((100% - (var(--board-gap) * 5)) / 4);
+  transform: translate(
+    calc(var(--x) * (100% + var(--board-gap))),
+    calc(var(--y) * (100% + var(--board-gap)))
+  );
+  transition: transform 150ms ease-in-out;
+  z-index: 10;
+}
+
+.tile-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+@media (max-width: 640px) {
+  .tile-inner {
+    border-radius: 0.5rem;
+  }
+}
+
+/* Animations */
+@keyframes appear {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.tile-new .tile-inner {
+  animation: appear 200ms ease-out forwards;
+}
+
+.tile-merged .tile-inner {
+  animation: pop 200ms ease-out forwards;
+}

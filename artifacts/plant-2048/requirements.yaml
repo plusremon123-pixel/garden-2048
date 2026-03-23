@@ -1,0 +1,11 @@
+packages:
+  "lucide-react": "For UI icons like refresh, play, and close buttons"
+  "clsx": "For conditional CSS class merging"
+  "tailwind-merge": "For merging Tailwind classes without conflicts"
+
+images: []
+
+notes:
+  - "Using strictly React local state and localStorage, no backend required."
+  - "Animations are handled entirely by CSS transitions to ensure smooth performance without heavy libraries like framer-motion."
+  - "Input handling includes both keyboard arrows and touch swipe for mobile optimization."
