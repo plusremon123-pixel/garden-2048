@@ -16,6 +16,7 @@ import { Header } from "@/components/Header";
 import { Modal } from "@/components/Modal";
 import { GameEndModal } from "@/components/GameEndModal";
 import { TileStagePanel } from "@/components/TileStagePanel";
+import { BackgroundLayer } from "@/components/BackgroundLayer";
 import { PlayerData } from "@/utils/playerData";
 import { ApplyXpResult } from "@/hooks/usePlayer";
 
@@ -111,7 +112,13 @@ export default function Game({ themeId, player, onEarnXp, onHome }: GameProps) {
   };
 
   return (
-    <div className="min-h-[100dvh] w-full flex flex-col items-center bg-background">
+    <div className="relative min-h-[100dvh] w-full flex flex-col items-center bg-background overflow-hidden">
+
+      {/* ── 배경 이미지 레이어 (모든 UI 뒤) ──────────────── */}
+      <BackgroundLayer highestTile={highestTile} />
+
+      {/* ── UI 콘텐츠 레이어 (배경보다 위) ──────────────── */}
+      <div className="relative z-10 w-full flex flex-col flex-1 items-center">
 
       {/* ── 상단 타일 단계 패널 ──────────────────────────── */}
       <TileStagePanel highestTile={highestTile} variant="top" />
@@ -141,8 +148,10 @@ export default function Game({ themeId, player, onEarnXp, onHome }: GameProps) {
         <TileStagePanel highestTile={highestTile} variant="bottom" />
 
       </div>
+      {/* ── UI 콘텐츠 레이어 닫기 ──────────────────────── */}
+      </div>
 
-      {/* ── 모달 레이어 ─────────────────────────────────── */}
+      {/* ── 모달 레이어 (Portal로 body에 렌더링됨) ──────── */}
 
       {/* 게임 종료 모달 (게임 오버 / 승리 공통) */}
       <GameEndModal

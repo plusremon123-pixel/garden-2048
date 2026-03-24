@@ -1,0 +1,95 @@
+현재 만든 2048 웹앱에 "단계별 배경 이미지 시스템"을 추가해줘.
+
+목표:
+- 최고 타일(highest tile)에 따라 게임 화면의 배경 일러스트가 바뀌게 만들기
+- 배경 이미지는 게임 보드 뒤쪽에 보이되, 보드와 UI를 가리지 않도록 배치
+- 식물이 점점 성장하는 느낌으로 단계별 배경이 바뀌게 구현
+- 모바일 화면 기준으로 자연스럽고 부드럽게 보이게 만들기
+
+현재 UI 구조:
+- 상단: 홈 / 테마 / 새 게임 / 레벨바 / 점수 영역
+- 중앙: 4x4 게임 보드
+- 하단: 다음 목표 영역
+- 게임 보드 뒤와 하단 영역에 배경 일러스트를 표시하고 싶음
+
+핵심 요구사항:
+1. highestTile 값에 따라 배경 이미지를 자동으로 변경
+2. 단계별 이미지 매핑:
+   - 2: seed
+   - 4: sprout
+   - 8: sprout2
+   - 16: leaf
+   - 32: pot
+   - 64: bud
+   - 128: flower
+   - 256: bigflower
+   - 512: sparklingflower
+   - 1024: rareflower
+   - 2048: legendaryflower
+3. 이미지 파일명은 우선 위 이름 기준으로 가정하고, assets/backgrounds 폴더에서 불러오게 해줘
+4. highestTile이 2048 이상이면 2048 배경 유지
+5. 배경 이미지는 CSS background-image 또는 별도 background layer로 처리
+6. 이미지 전환 시 부드러운 fade transition 적용
+7. 배경 이미지는 보드보다 뒤에 있어야 하고, 버튼이나 점수 UI를 가리지 않아야 함
+8. 게임 보드가 잘 보이도록 중앙 보드 영역은 비워두거나 배경이 약하게 보이도록 처리
+9. 하단 성장 이미지가 현재 단계에 맞게 아래에서 위로 자라나는 느낌이 나게 배치
+10. 지금 예시처럼 초반 단계는 하단 중앙에 작게, 후반 단계는 화면 하단/양옆을 더 많이 채우게 보이도록 구조화
+
+구현 방식:
+- gameState.highestTile 또는 현재 최고 타일 값을 기준으로 단계 계산
+- 단계별 배경 데이터는 별도 객체로 분리
+- 예:
+  const stageBackgroundMap = {
+    2: 'assets/backgrounds/seed.png',
+    4: 'assets/backgrounds/sprout.png',
+    ...
+    2048: 'assets/backgrounds/legendaryflower.png'
+  }
+- updateBackgroundByHighestTile(highestTile) 같은 함수로 관리
+- highestTile이 갱신될 때마다 자동 반영
+
+UI 레이어 구조 요구:
+- game-screen 안에 background-layer를 추가
+- background-layer는 다시 아래처럼 분리:
+  - top/background decorative layer
+  - bottom/growth illustration layer
+- 또는 단일 레이어로 처리해도 되지만 유지보수 쉽게 해줘
+- z-index 구조 명확하게:
+  - background layer
+  - board background/card
+  - actual tiles
+  - top controls
+  - modal
+
+스타일 요구사항:
+- 전체 앱과 어울리는 부드러운 파스텔톤 유지
+- 배경 이미지가 너무 진해서 보드를 방해하지 않게 opacity 또는 sizing 조정 가능하게
+- 초기 단계는 작고 단순하게
+- 높은 단계일수록 더 풍성하고 화면을 많이 채우는 느낌
+- 보드 뒤 중심 영역은 너무 복잡하지 않게 유지
+
+기능 요구사항:
+- 게임 시작 시 현재 highestTile 기준으로 배경 반영
+- 새 게임 시 highestTile 초기화에 맞춰 배경도 초기화
+- 게임 중 더 높은 타일이 나오면 배경 자동 업데이트
+- localStorage에서 best/highestTile을 관리 중이면 충돌 없이 동작하게 해줘
+
+CSS 요구사항:
+- background-layer는 position absolute 또는 similar 구조로 처리
+- game-board와 겹치되 보드 클릭/스와이프 방해하지 않게 pointer-events: none 처리
+- 배경 이미지 transition은 opacity 0.3~0.5초 정도
+- 모바일 화면 비율에서 자연스럽게 보이게 background-position, background-size 조정
+- 보드 하단과 하단 목표 영역 사이의 공간을 활용해서 성장 이미지가 자연스럽게 보이게 해줘
+
+개발 결과물 요구사항:
+1. 실행 가능한 전체 수정 코드
+2. 어떤 파일을 수정했는지 설명
+3. 새로 추가한 background 관련 객체/함수 설명
+4. 이미지 파일만 나중에 교체하면 되도록 구조화
+5. 이미지가 아직 없을 경우에도 placeholder 색상/박스로 동작하게 fallback 처리
+
+추가 요청:
+- 처음에는 placeholder 이미지 경로로 구조만 잡아줘도 됨
+- 이미지가 없으면 단계 이름 텍스트나 단색 박스로 fallback
+- 코드가 너무 복잡해지지 않게 유지
+- 기존 2048 게임 로직은 건드리지 말고 배경 시스템만 자연스럽게 추가
