@@ -16,9 +16,20 @@ interface BoardProps {
   graveyard: TileData[];
   onSwipe: (dir: "UP" | "DOWN" | "LEFT" | "RIGHT") => void;
   themeId?: string;
+  /** 타일 선택 모드 (선인장 카드 / remove 아이템) */
+  selectMode?: boolean;
+  onTileClick?: (tileId: string) => void;
+  /** 빈 칸 선택 모드 (해바라기 카드) */
+  emptyCellSelectMode?: boolean;
+  onEmptyCellClick?: (x: number, y: number) => void;
 }
 
-export function Board({ tiles, graveyard, onSwipe, themeId = "plant" }: BoardProps) {
+export function Board({
+  tiles, graveyard, onSwipe,
+  themeId = "plant",
+  selectMode = false, onTileClick,
+  emptyCellSelectMode = false, onEmptyCellClick,
+}: BoardProps) {
   const boardRef = useRef<HTMLDivElement>(null);
 
   /* ── 터치 스와이프 처리 ─────────────────────────────── */
@@ -47,8 +58,8 @@ export function Board({ tiles, graveyard, onSwipe, themeId = "plant" }: BoardPro
       const absDx = Math.abs(dx);
       const absDy = Math.abs(dy);
 
-      /* 최소 스와이프 거리: 40px */
-      if (Math.max(absDx, absDy) > 40) {
+      /* selectMode / emptyCellSelectMode 중에는 스와이프 무시 */
+      if (!selectMode && !emptyCellSelectMode && Math.max(absDx, absDy) > 40) {
         if (absDx > absDy) {
           onSwipe(dx > 0 ? "RIGHT" : "LEFT");
         } else {
@@ -79,9 +90,23 @@ export function Board({ tiles, graveyard, onSwipe, themeId = "plant" }: BoardPro
       >
         {/* 빈 셀 배경 그리드 */}
         <div className="grid grid-cols-4 grid-rows-4 w-full h-full gap-[var(--board-gap)]">
-          {Array.from({ length: 16 }).map((_, i) => (
-            <div key={`cell-${i}`} className="bg-cell rounded-xl md:rounded-2xl" />
-          ))}
+          {Array.from({ length: 16 }).map((_, i) => {
+            const cx = i % 4;
+            const cy = Math.floor(i / 4);
+            const isEmpty = emptyCellSelectMode && !tiles.some((t) => t.x === cx && t.y === cy);
+            return (
+              <div
+                key={`cell-${i}`}
+                className={[
+                  "bg-cell rounded-xl md:rounded-2xl transition-all",
+                  isEmpty
+                    ? "ring-2 ring-yellow-300/80 cursor-pointer hover:bg-yellow-100/40 hover:ring-4"
+                    : "",
+                ].join(" ")}
+                onClick={isEmpty ? () => onEmptyCellClick?.(cx, cy) : undefined}
+              />
+            );
+          })}
         </div>
 
         {/* 합쳐지는 중인 타일 (뒤에 렌더, z-0) */}
@@ -91,8 +116,32 @@ export function Board({ tiles, graveyard, onSwipe, themeId = "plant" }: BoardPro
 
         {/* 활성 타일 */}
         {tiles.map((tile) => (
-          <Tile key={tile.id} data={tile} themeId={themeId} />
+          <Tile
+            key={tile.id}
+            data={tile}
+            themeId={themeId}
+            selectMode={selectMode}
+            onClick={selectMode && onTileClick ? () => onTileClick(tile.id) : undefined}
+          />
         ))}
+
+        {/* 타일 선택 모드 안내 */}
+        {selectMode && (
+          <div className="absolute inset-0 z-20 flex items-start justify-center pt-3 pointer-events-none">
+            <div className="bg-black/65 text-white text-xs font-bold px-4 py-1.5 rounded-full animate-pulse">
+              제거할 타일을 선택하세요
+            </div>
+          </div>
+        )}
+
+        {/* 빈 칸 선택 모드 안내 */}
+        {emptyCellSelectMode && (
+          <div className="absolute inset-0 z-20 flex items-start justify-center pt-3 pointer-events-none">
+            <div className="bg-black/65 text-white text-xs font-bold px-4 py-1.5 rounded-full animate-pulse">
+              🌻 씨앗을 심을 빈 칸을 선택하세요
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
