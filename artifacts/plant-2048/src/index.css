@@ -43,6 +43,7 @@
   --primary-hover: 142 72% 29%;
   
   --board-gap: 0.75rem;
+  --board-size: 4;
 }
 
 @media (max-width: 640px) {
@@ -52,6 +53,11 @@
 }
 
 @layer base {
+  /* Google Play 가이드라인 기준 최소 14sp → rem 기반 클래스 전체 스케일업 */
+  html {
+    font-size: 18px;
+  }
+
   body {
     @apply bg-background text-foreground antialiased font-sans;
     /* 화면 전환 시 가로 스크롤바 방지 */
@@ -89,8 +95,8 @@
   position: absolute;
   top: var(--board-gap);
   left: var(--board-gap);
-  width: calc((100% - (var(--board-gap) * 5)) / 4);
-  height: calc((100% - (var(--board-gap) * 5)) / 4);
+  width: calc((100% - (var(--board-gap) * (var(--board-size) + 1))) / var(--board-size));
+  height: calc((100% - (var(--board-gap) * (var(--board-size) + 1))) / var(--board-size));
   transform: translate(
     calc(var(--x) * (100% + var(--board-gap))),
     calc(var(--y) * (100% + var(--board-gap)))
@@ -114,6 +120,56 @@
   .tile-inner {
     border-radius: 0.5rem;
   }
+}
+
+/* START 버튼 */
+@keyframes start-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.5), 0 6px 16px rgba(0,0,0,0.18), inset 0 2px 4px rgba(255,255,255,0.35); }
+  70%  { box-shadow: 0 0 0 12px rgba(251, 191, 36, 0), 0 6px 16px rgba(0,0,0,0.18), inset 0 2px 4px rgba(255,255,255,0.35); }
+  100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0),    0 6px 16px rgba(0,0,0,0.18), inset 0 2px 4px rgba(255,255,255,0.35); }
+}
+.start-btn {
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  border-radius:   999px;
+  border:          none;
+  background:      linear-gradient(to bottom, #fcd34d, #d97706);
+  color:           #78350f;
+  font-size:       20px;
+  font-weight:     900;
+  letter-spacing:  0.5px;
+  text-shadow:     0 1px 0 rgba(255,255,255,0.3);
+  box-shadow:      0 6px 16px rgba(0,0,0,0.18), inset 0 2px 4px rgba(255,255,255,0.35);
+  animation:       start-pulse 2s infinite;
+}
+.start-btn:active {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2), inset 0 3px 6px rgba(0,0,0,0.2);
+  animation:  none;
+}
+
+/* Level node — slow pulse for current level */
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.88; transform: scale(0.96); }
+}
+.animate-pulse-slow {
+  animation: pulse-slow 2.4s ease-in-out infinite;
+}
+
+/* ── 최소 폰트 보정 (Google Play 12sp 미만 방지) ─────────── */
+/* Tailwind arbitrary px 클래스 중 너무 작은 것들을 최소 12px로 올림 */
+[class*="text-[9px]"]  { font-size: 11px !important; }
+[class*="text-[10px]"] { font-size: 12px !important; }
+[class*="text-[11px]"] { font-size: 13px !important; }
+
+/* Modal slide-up animation */
+@keyframes modal-slide-up {
+  0%   { opacity: 0; transform: translateY(24px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.animate-modal-slide-up {
+  animation: modal-slide-up 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 /* Stage panel bump animation */

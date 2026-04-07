@@ -10,7 +10,7 @@
 import { useState, useCallback } from "react";
 import { THEME_STORAGE_KEY, THEMES } from "@/utils/themes";
 
-export type Screen = "front" | "game";
+export type Screen = "front" | "game" | "endless";
 
 const loadSavedTheme = (): string => {
   try {
@@ -42,6 +42,11 @@ export function useAppState() {
     setCurrentScreen("game");
   }, []);
 
+  /* 무한 모드 화면으로 전환 */
+  const goToEndless = useCallback(() => {
+    setCurrentScreen("endless");
+  }, []);
+
   /* 진입 화면으로 돌아가기 */
   const goToFront = useCallback(() => {
     setCurrentScreen("front");
@@ -52,6 +57,7 @@ export function useAppState() {
     selectedThemeId,
     selectTheme,
     goToGame,
+    goToEndless,
     goToFront,
   };
 }

@@ -11,6 +11,7 @@
 import { RefreshCw, Home, ShoppingBag } from "lucide-react";
 import { PlayerData } from "@/utils/playerData";
 import { LevelBar } from "@/components/LevelBar";
+import { useTranslation } from "@/i18n";
 
 interface HeaderProps {
   score:     number;
@@ -22,6 +23,7 @@ interface HeaderProps {
 }
 
 export function Header({ score, bestScore, player, onReset, onHome, onShop }: HeaderProps) {
+  const { t } = useTranslation();
   return (
     <header className="flex flex-col gap-2.5 mb-4 mt-2">
 
@@ -30,27 +32,27 @@ export function Header({ score, bestScore, player, onReset, onHome, onShop }: He
         <button
           onClick={onHome}
           className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-board hover:bg-cell active:scale-95 transition-all text-sm font-medium text-foreground/70"
-          aria-label="홈으로"
+          aria-label={t("game.homeBtn")}
         >
           <Home className="w-4 h-4" />
-          <span>홈</span>
+          <span>{t("game.homeBtn")}</span>
         </button>
 
         <div className="flex items-center gap-2">
           <button
             onClick={onShop}
             className="flex items-center gap-1 px-2.5 py-2 rounded-xl bg-board hover:bg-cell active:scale-95 transition-all text-sm font-medium text-foreground/60"
-            aria-label="상점"
+            aria-label={t("menu.shop")}
           >
             <ShoppingBag className="w-4 h-4" />
           </button>
           <button
             onClick={onReset}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary text-white hover:bg-primary-hover active:scale-95 transition-all text-sm font-medium shadow-sm"
-            aria-label="새 게임"
+            aria-label={t("game.newGame")}
           >
             <RefreshCw className="w-4 h-4" />
-            <span>새 게임</span>
+            <span>{t("game.newGame")}</span>
           </button>
         </div>
       </div>
@@ -62,8 +64,8 @@ export function Header({ score, bestScore, player, onReset, onHome, onShop }: He
 
       {/* ── 행 3: 점수 ──────────────────────────────────── */}
       <div className="flex items-center justify-center gap-3">
-        <ScoreBox label="현재 점수" score={score} />
-        <ScoreBox label="최고 점수" score={bestScore} />
+        <ScoreBox label={t("game.score")} score={score} />
+        <ScoreBox label={t("game.bestScore")} score={bestScore} />
       </div>
 
     </header>

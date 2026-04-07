@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Plant 2048</string>
+    <string name="title_activity_main">Plant 2048</string>
+    <string name="package_name">com.plant2048.app</string>
+    <string name="custom_url_scheme">com.plant2048.app</string>
+</resources>

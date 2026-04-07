@@ -31,10 +31,11 @@ const BEST_SCORE_KEY     = "plant2048_bestScore";
 const ANIMATION_DURATION = 150;
 const MAX_HISTORY        = 5; /* 최대 되돌리기 스택 깊이 */
 
-export function useGame(stageConfig?: StageConfig) {
-  const [gameState, setGameState] = useState<GameState>(() =>
-    stageConfig ? initializeStage(stageConfig) : initializeGame(),
-  );
+export function useGame(stageConfig?: StageConfig, boardSize = 4, initialState?: GameState) {
+  const [gameState, setGameState] = useState<GameState>(() => {
+    if (initialState) return initialState;
+    return stageConfig ? initializeStage(stageConfig) : initializeGame(boardSize);
+  });
   const [bestScore, setBestScore]             = useState<number>(0);
   const [isAnimating, setIsAnimating]         = useState(false);
   const [continuePlaying, setContinuePlaying] = useState(false);
@@ -122,7 +123,7 @@ export function useGame(stageConfig?: StageConfig) {
 
   /* ── 새 게임 ──────────────────────────────────────────── */
   const resetGame = useCallback(() => {
-    setGameState(stageConfig ? initializeStage(stageConfig) : initializeGame());
+    setGameState(stageConfig ? initializeStage(stageConfig) : initializeGame(boardSize));
     setContinuePlaying(false);
     setIsAnimating(false);
     setHistory([]);
@@ -201,12 +202,12 @@ export function useGame(stageConfig?: StageConfig) {
   /* ── 지정 칸 씨앗 소환 (해바라기 카드: spawnTileAt) ──────
    * 선택한 빈 칸에 값 2인 타일을 추가한다.
    * ──────────────────────────────────────────────────── */
-  const spawnTileAt = useCallback((x: number, y: number) => {
+  const spawnTileAt = useCallback((x: number, y: number, value = 2) => {
     setGameState((prev) => {
       if (prev.board[y]?.[x] !== null) return prev; // 빈 칸이 아니면 무시
       const newTile: TileData = {
         id: generateId(),
-        value: 2,
+        value,
         x,
         y,
         isNew: true,

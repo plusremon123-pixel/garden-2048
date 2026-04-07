@@ -12,8 +12,9 @@
  *  - updateMission:  미션 진행 업데이트 콜백 (App에서 전달)
  * ============================================================ */
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "@/i18n";
 import { useGame } from "@/hooks/useGame";
 import { useShop } from "@/hooks/useShop";
 import { useLoadout, type LoadoutRuntime, type LoadoutItemState } from "@/hooks/useLoadout";
@@ -26,7 +27,7 @@ import { LoadoutModal } from "@/components/LoadoutModal";
 import { BackgroundLayer } from "@/components/BackgroundLayer";
 import { PlayerData, getLevelGoal } from "@/utils/playerData";
 import { ShopItem, ShopItemId, SHOP_ITEMS, type Inventory } from "@/utils/shopData";
-import { CARDS, LOADOUT_ITEMS } from "@/utils/loadoutData";
+import { CARDS, LOADOUT_ITEMS, CARD_COLLECTION } from "@/utils/loadoutData";
 import { ApplyXpResult } from "@/hooks/usePlayer";
 import { MissionId, WeeklyMissionId } from "@/utils/missionData";
 import {
@@ -39,10 +40,28 @@ import {
 import {
   incrementGameCount,
   shouldShowInterstitialAd,
+  shouldShowFailureAd,
   markInterstitialAdShown,
 } from "@/utils/adService";
 import { recordGameScore } from "@/utils/rankingData";
 import { getStageConfig } from "@/utils/stageData";
+import {
+  SubscriptionState,
+  isPremiumActive,
+} from "@/utils/subscriptionData";
+import {
+  FailureState,
+  loadFailureState,
+  recordFailure,
+  recordWin,
+  recordGoldBoost,
+  canShowGoldBoost,
+  canShowFreeTrial,
+} from "@/utils/failureTracking";
+import { checkTrialExpiry } from "@/utils/subscriptionData";
+import { FreeTrialModal }   from "@/components/modals/FreeTrialModal";
+import { PremiumPassModal } from "@/components/modals/PremiumPassModal";
+import { GoldBoostModal }   from "@/components/modals/GoldBoostModal";
 
 interface GameProps {
   themeId?:              string;   // 하위 호환 유지 (미사용)
@@ -56,6 +75,9 @@ interface GameProps {
   onThemeChange?:        (id: string) => void;  // 하위 호환 유지 (미사용)
   updateMission:         (id: MissionId, inc?: number) => void;
   updateWeeklyMission:   (id: WeeklyMissionId, inc?: number) => void;
+  subscriptionState?:    SubscriptionState;
+  onStartTrial?:         () => void;
+  onBuyPremium?:         () => Promise<void>;
 }
 
 export default function Game({
@@ -68,7 +90,14 @@ export default function Game({
   onHome,
   updateMission,
   updateWeeklyMission,
+  subscriptionState,
+  onStartTrial,
+  onBuyPremium,
 }: GameProps) {
+  const { t } = useTranslation();
+  /* ── 구독 상태 ───────────────────────────────────────── */
+  const sub         = subscriptionState ?? { isPremium: false, trialUsed: false, trialActive: false, trialExpiry: null };
+  const premiumActive = isPremiumActive(sub);
   /* ── 스테이지 설정 (없으면 일반 모드) ──────────────────── */
   const stageConfig = getStageConfig(player.clearedLevel + 1) ?? undefined;
 
@@ -99,28 +128,46 @@ export default function Game({
   const {
     selectedCard, setSelectedCard,
     selectedItems, toggleItem,
-    isReady, buildRuntime,
+    isReady, isReadyItemsOnly,
+    buildRuntime, buildRuntimeNoCard,
     runtime,
     toggleCardActive, consumeCard,
     activateClover, decrementClover,
     consumeItem,
   } = useLoadout();
 
+  /* 스테이지 9 클리어 후 카드 해금 (clearedLevel >= 9) */
+  const cardsUnlocked = player.clearedLevel >= 9;
+
   /* 게임 시작 전 로드아웃 선택 모달 */
   const [showLoadout, setShowLoadout] = useState(false);
 
   /* 게임 화면이 활성화될 때 런타임이 없으면 로드아웃 모달 표시 */
   useEffect(() => {
-    if (isActive && runtime.card === null) {
+    if (isActive && runtime.items[0] === null) {
       setShowLoadout(true);
     }
   }, [isActive]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* 로드아웃 확정 → 런타임 초기화 + 게임 시작 */
   const handleLoadoutStart = () => {
-    buildRuntime();
+    if (cardsUnlocked) {
+      buildRuntime();
+    } else {
+      buildRuntimeNoCard();
+    }
     setShowLoadout(false);
   };
+
+  /* 카드 해금 팝업 */
+  const [showCardUnlock, setShowCardUnlock] = useState(false);
+
+  /* ── 실패 추적 & 수익화 팝업 상태 ───────────────────── */
+  const [failureState,       setFailureState]       = useState<FailureState>(loadFailureState);
+  const [goldBoostMultiplier, setGoldBoostMultiplier] = useState(1);
+  const [showFreeTrialModal,  setShowFreeTrialModal]  = useState(false);
+  const [showGoldBoostModal,  setShowGoldBoostModal]  = useState(false);
+  const [showPostTrialModal,  setShowPostTrialModal]  = useState(false);
 
   /* ── 타겟 선택 콜백 상태 ─────────────────────────────── *
    * 타일 / 빈 칸 선택 시 실행할 콜백을 저장.
@@ -174,6 +221,7 @@ export default function Game({
   /* ── 미션: 64 타일 달성 / 128 타일 달성 (중복 방지 ref) ── */
   const mission64ReportedRef  = useRef(false);
   const mission128ReportedRef = useRef(false);
+
   useEffect(() => {
     if (highestTile >= 64 && !mission64ReportedRef.current) {
       mission64ReportedRef.current = true;
@@ -255,6 +303,9 @@ export default function Game({
 
     const cardDef = CARDS.find((c) => c.id === card.id)!;
 
+    /* 황금 해바라기: 값 4짜리 타일 생성 */
+    const spawnValue = card.id === "golden_sunflower" ? 4 : 2;
+
     switch (cardDef.targetMode) {
       case "tile":
         toggleCardActive();
@@ -268,15 +319,25 @@ export default function Game({
       case "empty":
         toggleCardActive();
         setEmptyCellSelectCb(() => (x: number, y: number) => {
-          spawnTileAt(x, y);
+          spawnTileAt(x, y, spawnValue);
           consumeCard();
           updateMission("use_item");
           updateWeeklyMission("use_item_5");
         });
         break;
       case "instant":
-        activateClover(3);
-        setScoreMultiplier(1.2);
+        if (card.id === "life_tree") {
+          /* 생명의 나무: 가장 낮은 일반 타일 2개 제거 */
+          const sorted = Object.values(activeTiles)
+            .filter((t) => t.tileType !== "soil" && t.tileType !== "thorn")
+            .sort((a, b) => a.value - b.value)
+            .slice(0, 2);
+          sorted.forEach((t) => removeTileById(t.id));
+          consumeCard();
+        } else {
+          activateClover(3);
+          setScoreMultiplier(1.2);
+        }
         updateMission("use_item");
         updateWeeklyMission("use_item_5");
         break;
@@ -320,6 +381,9 @@ export default function Game({
     earnedCoins: number,
     action:      "reset" | "home"
   ) => {
+    /* 스테이지 9 클리어 = 카드 해금 이벤트 감지 (onClearLevel 호출 전) */
+    const justUnlockedCards = endIsWin && player.clearedLevel === 8;
+
     /* 스테이지 클리어 판정 */
     if (stageConfig) {
       /* 스테이지 모드: 목표 타일 달성 = 클리어 */
@@ -337,8 +401,22 @@ export default function Game({
       }
     }
 
-    /* 게임 코인 지급 */
-    onEarnCoins(earnedCoins);
+    /* ── 실패 추적 ───────────────────────────────────── */
+    const currentStageId = player.clearedLevel + 1;
+    let newFailState = failureState;
+    if (!endIsWin) {
+      newFailState = recordFailure(failureState, currentStageId);
+    } else {
+      newFailState = recordWin(failureState);
+    }
+    setFailureState(newFailState);
+
+    /* ── 골드 부스트 배율 적용 ───────────────────────── */
+    const boostedCoins = Math.round(earnedCoins * goldBoostMultiplier);
+    setGoldBoostMultiplier(1); // 다음 판 리셋
+
+    /* 게임 코인 지급 (골드 부스트 배율 적용됨) */
+    onEarnCoins(boostedCoins);
 
     /* 랭킹 점수 기록 (누적 + 최고점 갱신) */
     recordGameScore(endScore);
@@ -350,10 +428,33 @@ export default function Game({
     updateWeeklyMission("play_10");
     if (endScore >= 5000) updateWeeklyMission("score_5000");
 
-    /* 광고: 5판마다 1회 (첫 3판 제외) */
+    /* ── 체험 만료 체크 ──────────────────────────────── */
+    const justExpired = checkTrialExpiry(sub);
+    if (justExpired) {
+      setShowPostTrialModal(true);
+    }
+
+    /* ── 골드 부스트 팝업 (실패 시만) ────────────────── */
+    if (!endIsWin && !justExpired && canShowGoldBoost(newFailState, currentStageId)) {
+      setShowGoldBoostModal(true);
+    }
+
+    /* ── 무료 체험 팝업 (실패 시만, 조건 충족 시) ───── */
+    const isObstacleStage = !!(stageConfig && Object.keys(stageConfig).includes("obstacles"));
+    if (!endIsWin && !justExpired && !showGoldBoostModal && canShowFreeTrial(newFailState, sub, isObstacleStage)) {
+      setShowFreeTrialModal(true);
+    }
+
+    /* ── 광고: 5판마다 1회 (첫 3판 제외, 구독자 스킵) ── */
     const adCount = incrementGameCount();
-    if (shouldShowInterstitialAd(adCount)) {
+    if (shouldShowInterstitialAd(adCount, premiumActive)) {
       markInterstitialAdShown();
+      setShowAdOverlay(true);
+      setTimeout(() => setShowAdOverlay(false), 2000);
+    }
+
+    /* 실패 광고 (조건 충족 시, 구독자 스킵) */
+    if (!endIsWin && shouldShowFailureAd(newFailState.consecutiveFails, currentStageId, premiumActive)) {
       setShowAdOverlay(true);
       setTimeout(() => setShowAdOverlay(false), 2000);
     }
@@ -369,12 +470,16 @@ export default function Game({
     setTileSelectCb(null);
     setEmptyCellSelectCb(null);
 
-    if (action === "reset") {
-      buildRuntime(); // 같은 로드아웃으로 재시작
+    if (justUnlockedCards) {
+      resetGame();
+      setShowCardUnlock(true);
+    } else if (action === "reset") {
+      if (cardsUnlocked) buildRuntime();
+      else buildRuntimeNoCard();
       resetGame();
     } else {
       resetGame();
-      setShowLoadout(true); // 홈 → 다시 로드아웃 선택
+      setShowLoadout(true);
       onHome();
     }
   };
@@ -537,7 +642,7 @@ export default function Game({
             AD
           </div>
 
-          <div className="w-full max-w-[500px] flex flex-col flex-1 px-4 pb-4">
+          <div className="w-full max-w-[500px] flex flex-col flex-1 px-4 pb-14">
 
             <Header
               score={score}
@@ -596,7 +701,7 @@ export default function Game({
                   >
                     <span className="text-5xl">{dogamDrop.item.emoji}</span>
                     <p className="text-white font-bold text-sm mt-1">
-                      📖 {dogamDrop.item.name} 수집!
+                      {t("game.dogamCollected", { name: dogamDrop.item.name })}
                     </p>
                     <div className="flex items-center gap-2 w-36">
                       <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "rgba(255,255,255,0.2)" }}>
@@ -620,15 +725,11 @@ export default function Game({
             {/* ── 액션 바 (보드 아래) ──────────────────────────── */}
             <ActionBar
               runtime={runtime}
-              inventory={inventory}
-              player={player}
               canUndo={canUndo}
               hasSeedTiles={numberTiles.length > 4}
               hasTiles={numberTiles.length > 0}
               onCardClick={handleCardClick}
               onItemClick={handleLoadoutItemClick}
-              onShopUse={handleUseItem}
-              onRequestBuy={setPendingBuy}
             />
 
           </div>
@@ -640,10 +741,16 @@ export default function Game({
         <LoadoutModal
           selectedCard={selectedCard}
           selectedItems={selectedItems}
-          isReady={isReady}
+          isReady={cardsUnlocked ? isReady : isReadyItemsOnly}
+          cardsUnlocked={cardsUnlocked}
+          isPremiumActive={premiumActive}
+          stageLevel={player.clearedLevel + 1}
+          stageConfig={stageConfig}
+          clearedLevel={player.clearedLevel}
           onSelectCard={setSelectedCard}
           onToggleItem={toggleItem}
           onStart={handleLoadoutStart}
+          onClose={() => { setShowLoadout(false); onHome(); }}
         />
       )}
 
@@ -665,39 +772,86 @@ export default function Game({
         score={endScore}
         highestTile={endTile}
         player={playerSnapshot}
-        collectedDogamItems={endSessionDogamItems}
+        isPremiumActive={premiumActive}
         onConfirm={handleEndConfirm}
       />
+
+      {/* ── 카드 해금 팝업 (스테이지 9 클리어 시) ─────────── */}
+      {showCardUnlock && createPortal(
+        <CardUnlockOverlay
+          onDone={() => {
+            setShowCardUnlock(false);
+            setShowLoadout(true);
+            onHome();
+          }}
+        />,
+        document.body,
+      )}
 
       {/* 승리 후 계속 플레이 */}
       {!showEndModal && showWinModal && (
         <Modal
           isOpen={true}
           type="success"
-          title="전설의 꽃이 피었어요!"
-          description="계속 더 높은 타일에 도전해보세요!"
-          primaryAction={{ label: "계속 플레이", onClick: playOn }}
-          secondaryAction={{ label: "새 게임", onClick: resetGame }}
+          title={t("modal.winTitle")}
+          description={t("modal.winDesc")}
+          primaryAction={{ label: t("modal.continuePlay"), onClick: playOn }}
+          secondaryAction={{ label: t("modal.newGame"), onClick: resetGame }}
         />
       )}
 
       <Modal
         isOpen={showResetConfirm}
         type="info"
-        title="새 게임 시작"
-        description="진행 중인 게임이 초기화됩니다. 정말 다시 시작할까요?"
-        primaryAction={{ label: "네, 다시 할래요", onClick: confirmReset }}
-        secondaryAction={{ label: "취소", onClick: () => setShowResetConfirm(false) }}
+        title={t("modal.resetTitle")}
+        description={t("modal.resetDesc")}
+        primaryAction={{ label: t("modal.resetConfirm"), onClick: confirmReset }}
+        secondaryAction={{ label: t("modal.resetCancel"), onClick: () => setShowResetConfirm(false) }}
       />
 
       <Modal
         isOpen={showHomeConfirm}
         type="info"
-        title="홈으로 돌아가기"
-        description="진행 중인 게임이 종료됩니다. 홈 화면으로 돌아갈까요?"
-        primaryAction={{ label: "홈으로", onClick: confirmHome }}
-        secondaryAction={{ label: "계속 플레이", onClick: () => setShowHomeConfirm(false) }}
+        title={t("modal.homeTitle")}
+        description={t("modal.homeDesc")}
+        primaryAction={{ label: t("modal.homeConfirm"), onClick: confirmHome }}
+        secondaryAction={{ label: t("modal.homeCancel"), onClick: () => setShowHomeConfirm(false) }}
       />
+
+      {/* ── 수익화 팝업들 ─────────────────────────────────── */}
+      {showFreeTrialModal && (
+        <FreeTrialModal
+          onStart={() => {
+            onStartTrial?.();
+            setShowFreeTrialModal(false);
+          }}
+          onClose={() => setShowFreeTrialModal(false)}
+        />
+      )}
+
+      {showGoldBoostModal && (
+        <GoldBoostModal
+          isPremium={premiumActive}
+          onBoost={(multiplier) => {
+            setGoldBoostMultiplier(multiplier);
+            const updated = recordGoldBoost(failureState, player.clearedLevel + 1);
+            setFailureState(updated);
+            setShowGoldBoostModal(false);
+          }}
+          onClose={() => setShowGoldBoostModal(false)}
+        />
+      )}
+
+      {showPostTrialModal && (
+        <PremiumPassModal
+          isPostTrial={true}
+          onBuy={async () => {
+            await onBuyPremium?.();
+            setShowPostTrialModal(false);
+          }}
+          onClose={() => setShowPostTrialModal(false)}
+        />
+      )}
 
     </div>
   );
@@ -723,26 +877,26 @@ export default function Game({
               </div>
             </div>
             <h3 className="text-base font-black text-foreground text-center mb-1">
-              {pendingBuy.name} 구매
+              {t("modal.buyTitle", { name: pendingBuy.name })}
             </h3>
             <p className="text-xs text-foreground/45 text-center mb-1">
               {pendingBuy.description}
             </p>
             <p className="text-sm font-bold text-amber-600 text-center mb-5">
-              🪙 {pendingBuy.cost.toLocaleString()} 코인
+              {t("modal.buyCoins", { cost: pendingBuy.cost.toLocaleString() })}
             </p>
             <div className="flex gap-2">
               <button
                 onClick={() => setPendingBuy(null)}
                 className="flex-1 py-2.5 rounded-2xl bg-board text-foreground/60 font-bold text-sm hover:bg-cell active:scale-95 transition-all"
               >
-                취소
+                {t("modal.buyCancel")}
               </button>
               <button
                 onClick={handleConfirmBuy}
                 className="flex-[2] py-2.5 rounded-2xl bg-primary text-white font-bold text-sm shadow-sm hover:bg-primary-hover active:scale-95 transition-all"
               >
-                구매하기
+                {t("modal.buyConfirm")}
               </button>
             </div>
           </div>
@@ -766,23 +920,23 @@ export default function Game({
               </div>
             </div>
             <h3 className="text-base font-black text-foreground text-center mb-1">
-              타일 삭제
+              {t("modal.removeTileTitle")}
             </h3>
             <p className="text-xs text-foreground/45 text-center mb-5">
-              값 <span className="font-bold text-foreground/70">{pendingRemoveTile.value}</span>인 타일을 삭제할까요?
+              {t("modal.removeTileDesc", { value: pendingRemoveTile.value })}
             </p>
             <div className="flex gap-2">
               <button
                 onClick={handleCancelRemoveTile}
                 className="flex-1 py-2.5 rounded-2xl bg-board text-foreground/60 font-bold text-sm hover:bg-cell active:scale-95 transition-all"
               >
-                취소
+                {t("modal.removeTileCancel")}
               </button>
               <button
                 onClick={handleConfirmRemoveTile}
                 className="flex-[2] py-2.5 rounded-2xl bg-red-500 text-white font-bold text-sm shadow-sm hover:bg-red-600 active:scale-95 transition-all"
               >
-                삭제하기
+                {t("modal.removeTileConfirm")}
               </button>
             </div>
           </div>
@@ -794,7 +948,7 @@ export default function Game({
       {showAdOverlay && createPortal(
         <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80">
           <div className="bg-white rounded-2xl px-12 py-8 text-center shadow-2xl">
-            <p className="text-xs font-medium text-foreground/30 mb-1">광고</p>
+            <p className="text-xs font-medium text-foreground/30 mb-1">{t("game.ad")}</p>
             <p className="text-2xl font-black text-foreground/20">AD</p>
           </div>
         </div>,
@@ -804,39 +958,44 @@ export default function Game({
   );
 }
 
+/* ── CloverBanner: needs hook so must be a component ── */
+function CloverBanner({ cloverTurnsLeft }: { cloverTurnsLeft: number }) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex items-center justify-center gap-1.5 mb-2 py-1 rounded-xl bg-emerald-50 border border-emerald-200">
+      <span className="text-sm">🍀</span>
+      <span className="text-xs font-bold text-emerald-600">
+        {t("game.cloverActive")}
+      </span>
+      <span className="text-xs text-emerald-500 font-semibold">
+        {t("game.cloverTurns", { turns: cloverTurnsLeft })}
+      </span>
+    </div>
+  );
+}
+
 /* ============================================================
  * ActionBar
- * 하단 4-슬롯 액션 바
+ * 하단 3-슬롯 액션 바
  *
- * [상점 Undo] | [로드아웃 카드] | [로드아웃 아이템 0] | [로드아웃 아이템 1]
+ * [로드아웃 카드] | [로드아웃 아이템 0] | [로드아웃 아이템 1]
  *
- * - 상점 Undo: 기존 인벤토리 구매/사용 (하위 호환 유지)
  * - 카드 슬롯: 선택한 로드아웃 카드, 남은 사용 횟수
  * - 아이템 슬롯 0/1: 선택한 로드아웃 아이템
  * ============================================================ */
 interface ActionBarProps {
   runtime:      LoadoutRuntime;
-  inventory:    Inventory;
-  player:       PlayerData;
   canUndo:      boolean;
   hasSeedTiles: boolean;
   hasTiles:     boolean;
   onCardClick:  () => void;
   onItemClick:  (idx: 0 | 1) => void;
-  onShopUse:    (itemId: ShopItemId) => void;
-  onRequestBuy: (item: ShopItem) => void;
 }
 
 function ActionBar({
-  runtime, inventory, player, canUndo, hasSeedTiles, hasTiles,
-  onCardClick, onItemClick, onShopUse, onRequestBuy,
+  runtime, canUndo, hasSeedTiles, hasTiles,
+  onCardClick, onItemClick,
 }: ActionBarProps) {
-  const undoShopItem  = SHOP_ITEMS.find((i) => i.id === "undo")!;
-  const undoCount     = inventory["undo"] ?? 0;
-  const undoCanAfford = player.coins >= undoShopItem.cost;
-  const undoBlocked   = undoCount > 0 && !canUndo;
-  const undoActive    = undoCount > 0 && !undoBlocked;
-
   const { card, items, cloverTurnsLeft } = runtime;
 
   /* 카드 버튼 상태 */
@@ -845,57 +1004,13 @@ function ActionBar({
 
   return (
     <div className="mb-3 px-1">
-      {/* 클로버 버프 배너 */}
+      {/* 클로버 버프 배너 - rendered inside ActionBar which is inside Game */}
       {cloverTurnsLeft > 0 && (
-        <div className="flex items-center justify-center gap-1.5 mb-2 py-1 rounded-xl bg-emerald-50 border border-emerald-200">
-          <span className="text-sm">🍀</span>
-          <span className="text-xs font-bold text-emerald-600">
-            점수 +20% 활성 중
-          </span>
-          <span className="text-xs text-emerald-500 font-semibold">
-            ({cloverTurnsLeft}턴 남음)
-          </span>
-        </div>
+        <CloverBanner cloverTurnsLeft={cloverTurnsLeft} />
       )}
 
       <div className="flex items-stretch">
-        {/* ── 슬롯 1: 상점 되돌리기 ─────────────────────── */}
-        <div className="flex items-center flex-1">
-          <button
-            onClick={() => {
-              if (undoActive) { onShopUse("undo"); return; }
-              if (undoCount === 0 && undoCanAfford) { onRequestBuy(undoShopItem); return; }
-            }}
-            disabled={undoBlocked || (undoCount === 0 && !undoCanAfford)}
-            title={undoBlocked ? "되돌릴 이동이 없습니다" : undefined}
-            className={[
-              "flex flex-col items-center gap-0.5 flex-1 py-2 px-1 transition-all active:scale-95",
-              undoActive ? "opacity-100 hover:opacity-80"
-              : undoBlocked ? "opacity-25 cursor-not-allowed"
-              : undoCount === 0 && undoCanAfford ? "opacity-70 hover:opacity-90"
-              : "opacity-30 cursor-not-allowed",
-            ].join(" ")}
-          >
-            <span className="text-2xl leading-none">{undoShopItem.emoji}</span>
-            <span className="text-[11px] font-semibold text-foreground/70 leading-tight">
-              되돌리기
-            </span>
-            {undoCount > 0 ? (
-              <span className={["text-[10px] font-bold leading-tight",
-                undoBlocked ? "text-foreground/30" : "text-primary"].join(" ")}>
-                ×{undoCount}
-              </span>
-            ) : (
-              <span className="text-[10px] font-bold text-amber-500 leading-tight">
-                🪙{undoShopItem.cost}
-              </span>
-            )}
-          </button>
-        </div>
-
-        <div className="w-px bg-foreground/15 shrink-0 self-stretch" />
-
-        {/* ── 슬롯 2: 로드아웃 카드 ──────────────────────── */}
+        {/* ── 슬롯 1: 로드아웃 카드 ──────────────────────── */}
         <div className="flex items-center flex-1">
           <button
             onClick={onCardClick}
@@ -911,7 +1026,7 @@ function ActionBar({
           >
             <span className="text-2xl leading-none">{cardDef?.emoji ?? "❓"}</span>
             <span className="text-[11px] font-semibold text-foreground/70 leading-tight">
-              {cardDef?.name ?? "카드"}
+              {cardDef?.name ?? <CardNoLabel />}
             </span>
             <span className={[
               "text-[10px] font-bold leading-tight",
@@ -919,14 +1034,14 @@ function ActionBar({
               : cardExhausted ? "text-foreground/30"
               : "text-primary",
             ].join(" ")}>
-              {card?.isActive ? "선택 중..." : card ? `×${card.usesLeft}` : "×0"}
+              {card?.isActive ? <CardActiveLabel /> : card ? `×${card.usesLeft}` : "×0"}
             </span>
           </button>
         </div>
 
         <div className="w-px bg-foreground/15 shrink-0 self-stretch" />
 
-        {/* ── 슬롯 3: 로드아웃 아이템 0 ─────────────────── */}
+        {/* ── 슬롯 2: 로드아웃 아이템 0 ─────────────────── */}
         <LoadoutItemSlot
           item={items[0]}
           idx={0}
@@ -938,7 +1053,7 @@ function ActionBar({
 
         <div className="w-px bg-foreground/15 shrink-0 self-stretch" />
 
-        {/* ── 슬롯 4: 로드아웃 아이템 1 ─────────────────── */}
+        {/* ── 슬롯 3: 로드아웃 아이템 1 ─────────────────── */}
         <LoadoutItemSlot
           item={items[1]}
           idx={1}
@@ -950,6 +1065,16 @@ function ActionBar({
       </div>
     </div>
   );
+}
+
+/* ── Card label helpers (need hooks so must be components) ── */
+function CardNoLabel() {
+  const { t } = useTranslation();
+  return <>{t("game.noCard")}</>;
+}
+function CardActiveLabel() {
+  const { t } = useTranslation();
+  return <>{t("game.cardActive")}</>;
 }
 
 /* ── 로드아웃 아이템 슬롯 ────────────────────────────────── */
@@ -965,10 +1090,12 @@ interface LoadoutItemSlotProps {
 function LoadoutItemSlot({
   item, canUndo, hasSeedTiles, hasTiles, onClick,
 }: LoadoutItemSlotProps) {
+  const { t } = useTranslation();
+
   if (!item) return (
     <div className="flex flex-col items-center gap-0.5 flex-1 py-2 px-1 opacity-20">
       <span className="text-2xl leading-none">❓</span>
-      <span className="text-[11px] font-semibold text-foreground/70 leading-tight">없음</span>
+      <span className="text-[11px] font-semibold text-foreground/70 leading-tight">{t("game.noItem")}</span>
     </div>
   );
 
@@ -983,16 +1110,18 @@ function LoadoutItemSlot({
     );
 
   const blockMsg: Record<string, string> = {
-    undo:   "되돌릴 이동이 없습니다",
-    clean:  "타일이 5개 이상일 때 사용 가능",
-    remove: "제거할 타일이 없습니다",
+    undo:   t("game.undoBlocked"),
+    clean:  t("game.cleanBlocked"),
+    remove: t("game.removeBlocked"),
   };
+
+  const itemName = t(`item.${item.id}.name`) !== `item.${item.id}.name` ? t(`item.${item.id}.name`) : itemDef.name;
 
   return (
     <button
       onClick={onClick}
       disabled={depleted || blocked}
-      title={blocked ? blockMsg[item.id] : `${itemDef.name} 사용`}
+      title={blocked ? blockMsg[item.id] : t("game.useItem", { name: itemName })}
       className={[
         "flex flex-col items-center gap-0.5 flex-1 py-2 px-1 transition-all active:scale-95",
         depleted ? "opacity-20 cursor-not-allowed"
@@ -1002,7 +1131,7 @@ function LoadoutItemSlot({
     >
       <span className="text-2xl leading-none">{itemDef.emoji}</span>
       <span className="text-[11px] font-semibold text-foreground/70 leading-tight">
-        {itemDef.name}
+        {itemName}
       </span>
       <span className={[
         "text-[10px] font-bold leading-tight",
@@ -1032,6 +1161,8 @@ interface GoalBannerProps {
 }
 
 function GoalBanner({ score, stageGoal, turnsLeft, maxTurns, goalTile }: GoalBannerProps) {
+  const { t } = useTranslation();
+
   /* ── 스테이지 모드: 타일 목표 + 턴 카운터 ─────────────── */
   if (goalTile !== undefined && turnsLeft !== undefined && maxTurns !== undefined) {
     const turnPct    = maxTurns > 0 ? Math.min(100, Math.round((turnsLeft / maxTurns) * 100)) : 0;
@@ -1042,8 +1173,7 @@ function GoalBanner({ score, stageGoal, turnsLeft, maxTurns, goalTile }: GoalBan
         <span className="text-base">🎯</span>
         <div className="flex-1 min-w-0">
           <p className="text-xs font-bold text-foreground/70">
-            목표:{" "}
-            <span className="text-primary font-black">{goalTile}</span> 타일 달성
+            {t("game.goalTile", { tile: goalTile })}
           </p>
           <div className="mt-1 h-1 bg-foreground/10 rounded-full overflow-hidden">
             <div
@@ -1062,7 +1192,7 @@ function GoalBanner({ score, stageGoal, turnsLeft, maxTurns, goalTile }: GoalBan
           ].join(" ")}>
             {turnsLeft}
           </p>
-          <p className="text-[10px] text-foreground/35 leading-tight">남은 턴</p>
+          <p className="text-[10px] text-foreground/35 leading-tight">{t("game.turnsLeft")}</p>
         </div>
       </div>
     );
@@ -1084,14 +1214,14 @@ function GoalBanner({ score, stageGoal, turnsLeft, maxTurns, goalTile }: GoalBan
       <div className="flex-1 min-w-0">
         {achieved ? (
           <p className="text-xs font-bold text-emerald-600">
-            목표 달성! {stageGoal.toLocaleString()}점을 넘었어요
+            {t("game.goalExceeded", { goal: stageGoal.toLocaleString() })}
           </p>
         ) : (
           <>
             <p className="text-xs font-bold text-foreground/70">
               {score === 0
-                ? `${stageGoal.toLocaleString()}점을 넘어보세요!`
-                : `현재 ${score.toLocaleString()} / ${stageGoal.toLocaleString()}`}
+                ? t("game.goalPrompt", { goal: stageGoal.toLocaleString() })
+                : t("game.goalProgress", { score: score.toLocaleString(), goal: stageGoal.toLocaleString() })}
             </p>
             <div className="mt-1 h-1 bg-foreground/10 rounded-full overflow-hidden">
               <div
@@ -1101,6 +1231,61 @@ function GoalBanner({ score, stageGoal, turnsLeft, maxTurns, goalTile }: GoalBan
             </div>
           </>
         )}
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+ * CardUnlockOverlay
+ * 스테이지 9 클리어 시 시작 카드 3종 해금 애니메이션 팝업
+ * ============================================================ */
+function CardUnlockOverlay({ onDone }: { onDone: () => void }) {
+  const { t } = useTranslation();
+  const [visible, setVisible] = useState([false, false, false]);
+  const starterCards = CARD_COLLECTION.slice(0, 3);
+  const doneCalled = useRef(false);
+
+  const done = useCallback(() => {
+    if (!doneCalled.current) { doneCalled.current = true; onDone(); }
+  }, [onDone]);
+
+  useEffect(() => {
+    const t0 = setTimeout(() => setVisible([true,  false, false]), 300);
+    const t1 = setTimeout(() => setVisible([true,  true,  false]), 800);
+    const t2 = setTimeout(() => setVisible([true,  true,  true]),  1300);
+    const t3 = setTimeout(() => done(), 3000);
+    return () => { clearTimeout(t0); clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return (
+    <div className="fixed inset-0 z-[400] flex items-center justify-center bg-black/65 backdrop-blur-sm">
+      <div className="bg-white rounded-3xl px-6 py-8 w-full max-w-xs mx-4 flex flex-col items-center gap-5 shadow-2xl animate-in zoom-in-95 duration-300">
+        <div className="text-4xl">🎉</div>
+        <div className="text-center">
+          <h2 className="text-xl font-display font-bold text-foreground">{t("cardCollection.starterCards")} {t("game.stageClear")}</h2>
+          <p className="text-sm text-foreground/50 mt-1">{t("cardCollection.starterBadgeLocked")}</p>
+        </div>
+
+        <div className="flex gap-3 w-full">
+          {starterCards.map((card, i) => (
+            <div
+              key={card.collectionId}
+              className="flex-1 flex flex-col items-center gap-1.5 rounded-2xl py-4 border-2 transition-all duration-500"
+              style={{
+                opacity:     visible[i] ? 1 : 0,
+                transform:   visible[i] ? "scale(1) translateY(0)" : "scale(0.7) translateY(12px)",
+                borderColor: visible[i] ? "#6ee7b7" : "transparent",
+                background:  visible[i] ? "#d1fae5" : "transparent",
+              }}
+            >
+              <span className="text-3xl leading-none">{card.emoji}</span>
+              <span className="text-xs font-bold text-emerald-700 leading-tight">{card.name}</span>
+            </div>
+          ))}
+        </div>
+
+        <p className="text-xs text-foreground/40">...</p>
       </div>
     </div>
   );

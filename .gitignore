@@ -47,3 +47,17 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Android build artifacts
+artifacts/plant-2048/android/.gradle/
+artifacts/plant-2048/android/app/build/
+artifacts/plant-2048/android/build/
+artifacts/plant-2048/android/local.properties
+
+# Build logs & temp files
+build-android-log.txt
+build_out.txt
+node_out.txt
+node_ver.txt
+node_ver2.txt
+pnpm_out.txt

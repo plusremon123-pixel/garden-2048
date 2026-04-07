@@ -16,6 +16,7 @@ interface BoardProps {
   graveyard: TileData[];
   onSwipe: (dir: "UP" | "DOWN" | "LEFT" | "RIGHT") => void;
   themeId?: string;
+  gridSize?: number;
   /** 타일 선택 모드 (선인장 카드 / remove 아이템) */
   selectMode?: boolean;
   onTileClick?: (tileId: string) => void;
@@ -27,6 +28,7 @@ interface BoardProps {
 export function Board({
   tiles, graveyard, onSwipe,
   themeId = "plant",
+  gridSize = 4,
   selectMode = false, onTileClick,
   emptyCellSelectMode = false, onEmptyCellClick,
 }: BoardProps) {
@@ -82,17 +84,30 @@ export function Board({
     };
   }, [onSwipe]);
 
+  const boardSizeStyle = gridSize !== 4
+    ? ({ "--board-size": gridSize } as React.CSSProperties)
+    : undefined;
+
   return (
     <div className="relative w-full max-w-[500px] aspect-square mx-auto">
       <div
         ref={boardRef}
         className="absolute inset-0 bg-board rounded-2xl p-[var(--board-gap)] shadow-inner touch-none"
+        style={boardSizeStyle}
       >
         {/* 빈 셀 배경 그리드 */}
-        <div className="grid grid-cols-4 grid-rows-4 w-full h-full gap-[var(--board-gap)]">
-          {Array.from({ length: 16 }).map((_, i) => {
-            const cx = i % 4;
-            const cy = Math.floor(i / 4);
+        <div
+          className="w-full h-full gap-[var(--board-gap)]"
+          style={{
+            display: "grid",
+            gridTemplateColumns: `repeat(${gridSize}, 1fr)`,
+            gridTemplateRows: `repeat(${gridSize}, 1fr)`,
+            gap: "var(--board-gap)",
+          }}
+        >
+          {Array.from({ length: gridSize * gridSize }).map((_, i) => {
+            const cx = i % gridSize;
+            const cy = Math.floor(i / gridSize);
             const isEmpty = emptyCellSelectMode && !tiles.some((t) => t.x === cx && t.y === cy);
             return (
               <div

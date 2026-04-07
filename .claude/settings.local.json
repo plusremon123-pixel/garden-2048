@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__Claude_Preview__preview_start",
+      "Bash(npx tsc:*)",
+      "Bash(\"C:/Users/19002857/Desktop/plant2048/artifacts/plant-2048/src/i18n/locales/ko.json\":*)",
+      "Bash(\"C:/Users/19002857/Desktop/plant2048/artifacts/plant-2048/src/i18n/locales/en.json\":*)",
+      "Bash(python3 -c \":*)",
+      "Bash(python3:*)",
+      "mcp__Desktop_Commander__list_directory",
+      "mcp__Desktop_Commander__read_file",
+      "Bash(wc -l '/c/Users/19002857/Desktop/plant2048/artifacts/plant-2048/src/components/modals'/*.tsx)"
+    ]
+  }
+}

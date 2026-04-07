@@ -53,6 +53,11 @@ export function useLoadout() {
     selectedItems[0] !== null &&
     selectedItems[1] !== null;
 
+  /* 아이템 2개만 선택됐을 때 true (카드 미해금 구간) */
+  const isReadyItemsOnly =
+    selectedItems[0] !== null &&
+    selectedItems[1] !== null;
+
   /* ── 선택 단계 조작 ─────────────────────────────────────── */
 
   /** 아이템 토글 (최대 2개, 이미 선택 시 해제) */
@@ -65,6 +70,21 @@ export function useLoadout() {
       return prev; // 두 슬롯이 모두 차있으면 무시
     });
   }, []);
+
+  /** 카드 없이 아이템만으로 런타임 초기화 (카드 미해금 구간) */
+  const buildRuntimeNoCard = useCallback(() => {
+    if (!selectedItems[0] || !selectedItems[1]) return;
+    const item0Def = LOADOUT_ITEMS.find((i) => i.id === selectedItems[0])!;
+    const item1Def = LOADOUT_ITEMS.find((i) => i.id === selectedItems[1])!;
+    setRuntime({
+      card:  null,
+      items: [
+        { id: selectedItems[0], usesLeft: item0Def.maxUses },
+        { id: selectedItems[1], usesLeft: item1Def.maxUses },
+      ],
+      cloverTurnsLeft: 0,
+    });
+  }, [selectedItems]);
 
   /** 선택 확정 → 런타임 초기화 (게임 시작 시 호출) */
   const buildRuntime = useCallback(() => {
@@ -143,7 +163,8 @@ export function useLoadout() {
     /* 선택 단계 */
     selectedCard,  setSelectedCard,
     selectedItems, toggleItem,
-    isReady,       buildRuntime,
+    isReady, isReadyItemsOnly,
+    buildRuntime, buildRuntimeNoCard,
     /* 런타임 단계 */
     runtime,
     toggleCardActive,

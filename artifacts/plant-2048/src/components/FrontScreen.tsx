@@ -1,17 +1,9 @@
 /* ============================================================
  * FrontScreen.tsx
- * 홈 화면 — Candy Crush 스타일 레벨 맵 UI
- *
- * 레이아웃 (단일 화면):
- *   [AD 상단]
- *   [헤더: 타이틀 + 코인]
- *   [XP바]
- *   [레벨 맵 flex-1 — 좌/우 아이콘 메뉴 오버레이]
- *   [게임 시작 버튼]
- *   [AD 하단]
+ * 홈 화면 — 배경 콘텐츠 영역 기준 좌표계 + 에셋 비율 유지
  * ============================================================ */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import {
   PlayerData, LEVEL_REWARDS, xpForNextLevel, xpProgress,
@@ -23,21 +15,89 @@ import {
 import { getAdCoinState } from "@/utils/adService";
 import { type Inventory, type ShopItemId } from "@/utils/shopData";
 import type { GameSettings } from "@/hooks/useSettings";
-import { type PendingReward, PERIOD_LABEL } from "@/utils/rankingData";
-import { getStageConfig } from "@/utils/stageData";
-import { RankingModal }   from "./modals/RankingModal";
-import { ItemsModal }     from "./modals/ItemsModal";
-import { HomeShopModal }  from "./modals/HomeShopModal";
-import { SettingsModal }  from "./modals/SettingsModal";
-import { DogamModal }     from "./modals/DogamModal";
+import { type PendingReward } from "@/utils/rankingData";
+import { useTranslation } from "@/i18n";
+import { RankingModal }           from "./modals/RankingModal";
+import { ItemsModal }             from "./modals/ItemsModal";
+import { CardCollectionModal }    from "./modals/CardCollectionModal";
+import { HomeShopModal }          from "./modals/HomeShopModal";
+import { SettingsModal }          from "./modals/SettingsModal";
+import { DogamModal }             from "./modals/DogamModal";
+import { PremiumPassModal }       from "./modals/PremiumPassModal";
+import { EndlessDifficultyModal } from "./modals/EndlessDifficultyModal";
+import type { EndlessDifficulty } from "@/utils/endlessModeData";
 
-/* ── 활성 모달 타입 ────────────────────────────────────────── */
-type ActiveModal = "ranking" | "items" | "shop" | "settings" | "dogam" | null;
+/* ============================================================
+ * Design constants
+ * ============================================================ */
+const DESIGN_W = 1152;
+const DESIGN_H = 2048;
+
+/* ── Background layout (home-bg.png fills 100% × 100% of container) ── */
+interface BgLayout { offsetX: number; offsetY: number; renderW: number; renderH: number }
+
+function toRenderPoint(designX: number, designY: number, bg: BgLayout) {
+  const scaleX = bg.renderW / DESIGN_W;
+  const scaleY = bg.renderH / DESIGN_H;
+  return { rx: bg.offsetX + designX * scaleX, ry: bg.offsetY + designY * scaleY, scaleX, scaleY };
+}
+
+/* ── Stage node template (center anchor in design space) ────── */
+type StageNodeTemplate = {
+  stage:   number;
+  cx:      number;
+  cy:      number;
+  offsetX?: number;
+  offsetY?: number;
+};
+
+/* 20개 노드 — 디자인 좌표 (cx, cy) 기준 center anchor */
+/* 돌길 중앙 center anchor — 레퍼런스 이미지 정밀 트레이싱 후 균등 간격(≈173px) */
+const STAGE_NODE_TEMPLATES: StageNodeTemplate[] = [
+  { stage:  1, cx:  939, cy: 1939 }, // 풍차 앞 길 시작
+  { stage:  2, cx:  824, cy: 1811 }, // 우측 하단 곡선
+  { stage:  3, cx:  669, cy: 1745 }, // 하단 좌로 이동
+  { stage:  4, cx:  498, cy: 1766 }, // 하단 중앙
+  { stage:  5, cx:  333, cy: 1768 }, // 하단 좌측
+  { stage:  6, cx:  217, cy: 1654 }, // 좌측 방향 전환
+  { stage:  7, cx:  165, cy: 1491 }, // 좌측 상향
+  { stage:  8, cx:  182, cy: 1326 }, // 좌측 상단 곡선
+  { stage:  9, cx:  278, cy: 1191 }, // 중앙으로 우이동
+  { stage: 10, cx:  437, cy: 1126 }, // 중앙
+  { stage: 11, cx:  608, cy: 1110 }, // 중앙 우측
+  { stage: 12, cx:  780, cy: 1126 }, // 우측 중앙
+  { stage: 13, cx:  891, cy: 1049 }, // 우측 상향
+  { stage: 14, cx:  930, cy:  881 }, // 우측 상단
+  { stage: 15, cx:  895, cy:  715 }, // 우측 상단 곡선
+  { stage: 16, cx:  776, cy:  594 }, // 상단 좌로 이동
+  { stage: 17, cx:  623, cy:  514 }, // 상단 중앙
+  { stage: 18, cx:  461, cy:  455 }, // 상단 좌측
+  { stage: 19, cx:  338, cy:  357 }, // 상단 좌측 상향
+  { stage: 20, cx:  390, cy:  203 }, // 상단 도착
+];
+
+const LEVELS_PER_PAGE = 20;
+const MAX_PAGES       = 5;
+
+/* ── Menu data ─────────────────────────────────────────────── */
+interface MenuItemDef {
+  key:       string;
+  x:         number;
+  y:         number;
+  imageSrc?: string;
+  emoji?:    string;
+  highlight?: boolean;
+}
+
+type NodeStatus = "done" | "current" | "available" | "locked";
+
+/* ── Active modal type ─────────────────────────────────────── */
+type ActiveModal = "ranking" | "items" | "cards" | "shop" | "settings" | "dogam" | "premium" | "endless" | null;
 
 /* ── Props ─────────────────────────────────────────────────── */
 interface FrontScreenProps {
   player:                 PlayerData;
-  selectedThemeId?:       string;    // 테마 기능 제거 (하위 호환 유지)
+  selectedThemeId?:       string;
   onSelectTheme?:         (id: string) => void;
   onStartGame:            () => void;
   missions?:              MissionState[];
@@ -46,36 +106,54 @@ interface FrontScreenProps {
   onClaimWeeklyMission?:  (id: WeeklyMissionId) => number;
   onEarnCoins?:           (amount: number) => void;
   onAdWatched?:           () => void;
-  /* 상점 / 아이템 */
   inventory?:             Inventory;
   onBuyItem?:             (id: ShopItemId, cost: number) => boolean;
-  /* 설정 */
   settings?:              GameSettings;
   onToggleSetting?:       (key: keyof GameSettings) => void;
-  /* 랭킹 보상 */
   rankingRewards?:        PendingReward[];
   onClaimRankingReward?:  (periodKey: string) => void;
+  isPremiumActive?:       boolean;
+  onBuyPremium?:          () => Promise<void>;
+  onStartEndless?:        (difficulty: EndlessDifficulty, resume: boolean) => void;
 }
 
 const DEFAULT_SETTINGS: GameSettings = {
   sound: true, vibration: true, animation: true, notifications: false,
 };
 
+/* ============================================================
+ * FrontScreen
+ * ============================================================ */
 export function FrontScreen({
   player, onStartGame,
   missions = [], onClaimMission,
   weeklyMissions = [], onClaimWeeklyMission,
   onEarnCoins, onAdWatched,
-  inventory,
-  onBuyItem,
-  settings = DEFAULT_SETTINGS,
-  onToggleSetting,
-  rankingRewards = [],
-  onClaimRankingReward,
+  inventory, onBuyItem,
+  settings = DEFAULT_SETTINGS, onToggleSetting,
+  rankingRewards = [], onClaimRankingReward,
+  isPremiumActive = false, onBuyPremium,
+  onStartEndless,
 }: FrontScreenProps) {
+  const { t } = useTranslation();
+  const containerRef                        = useRef<HTMLDivElement>(null);
+  const [bg, setBg]                         = useState<BgLayout>({ offsetX: 0, offsetY: 0, renderW: 0, renderH: 0 });
   const [showMissionModal, setShowMissionModal] = useState(false);
   const [activeModal,      setActiveModal]      = useState<ActiveModal>(null);
-  const [selectedLevel,    setSelectedLevel]    = useState<number | null>(null);
+
+  /* 컨테이너 크기 추적 → BgLayout 업데이트 */
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const update = () => {
+      const { width, height } = el.getBoundingClientRect();
+      setBg({ offsetX: 0, offsetY: 0, renderW: width, renderH: height });
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const closeModal = () => setActiveModal(null);
 
@@ -83,96 +161,112 @@ export function FrontScreen({
   const completedWeekly = weeklyMissions.filter((m) => m.status === "complete").length;
   const missionBadge    = completedDaily + completedWeekly;
 
-  return (
-    <div className="relative h-[100dvh] w-full overflow-hidden">
+  /* 노드 클릭 */
+  const handleNodeSelect = (level: number) => {
+    const status: NodeStatus =
+      level <= player.clearedLevel      ? "done"      :
+      level === player.clearedLevel + 1 ? "current"   :
+      level === player.clearedLevel + 2 ? "available" : "locked";
+    if (status !== "locked") onStartGame();
+  };
 
-      {/* ── 풀스크린 배경 레이어 ────────────────────────── */}
+  /* 메뉴 데이터 (label은 렌더 시 t() 적용) */
+  // 카드 간 여백 1/2 축소: edge gap 70→35, center 간격 170+35=205, 시작 y=205 고정
+  const leftMenuItems: MenuItemDef[] = [
+    { key: "mission",  x:  38, y: 205, imageSrc: "/icons/icon-mission.png" },
+    { key: "ranking",  x:  38, y: 410, imageSrc: "/icons/icon-ranking.png" },
+    { key: "dogam",    x:  38, y: 615, imageSrc: "/icons/icon-book.png"    },
+    { key: "endless",  x:  38, y: 820, emoji: "♾️"                         },
+  ];
+  const rightMenuItems: MenuItemDef[] = [
+    { key: "cards",    x: 944, y: 205, imageSrc: "/icons/icon-card.png"    },
+    { key: "shop",     x: 944, y: 410, imageSrc: "/icons/icon-shop.png"    },
+    { key: "settings", x: 944, y: 615, emoji: "⚙️"                         },
+    { key: "premium",  x: 944, y: 820, emoji: isPremiumActive ? "💎" : "✨", highlight: !isPremiumActive },
+  ];
+
+  const menuLabel: Record<string, string> = {
+    mission:  t("menu.missions"),
+    ranking:  t("menu.ranking"),
+    dogam:    t("menu.dogam"),
+    endless:  t("menu.endless"),
+    cards:    t("menu.cards"),
+    shop:     t("menu.shop"),
+    settings: t("menu.settings"),
+    premium:  isPremiumActive ? t("menu.premium") : t("menu.subscribe"),
+  };
+
+  const menuBadge: Partial<Record<string, number>> = {
+    mission: missionBadge > 0 ? missionBadge : undefined,
+  };
+
+  const menuOnClick: Record<string, () => void> = {
+    mission:  () => setShowMissionModal(true),
+    ranking:  () => setActiveModal("ranking"),
+    dogam:    () => setActiveModal("dogam"),
+    endless:  () => setActiveModal("endless"),
+    cards:    () => setActiveModal("cards"),
+    shop:     () => setActiveModal("shop"),
+    settings: () => setActiveModal("settings"),
+    premium:  () => setActiveModal("premium"),
+  };
+
+  const ready = bg.renderW > 0 && bg.renderH > 0;
+
+  return (
+    <div ref={containerRef} className="relative h-[100dvh] w-full overflow-hidden">
+
+      {/* ── 배경 이미지 (100% × 100% cover) ──────────────────── */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          backgroundImage: "url(/home-bg.png)",
-          backgroundSize: "100% 100%",
+          backgroundImage:    "url(/home-bg.png)",
+          backgroundSize:     "100% 100%",
           backgroundPosition: "top left",
-          backgroundRepeat: "no-repeat",
+          backgroundRepeat:   "no-repeat",
           zIndex: 0,
         }}
       />
-      {/* 잎 장식 레이어 */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
-        <span className="absolute top-[7%]  left-[4%]  text-5xl opacity-20 rotate-[-25deg] select-none">🍃</span>
-        <span className="absolute top-[12%] right-[3%] text-4xl opacity-20 rotate-[35deg]  select-none">🌿</span>
-        <span className="absolute top-[30%] left-[2%]  text-3xl opacity-15 rotate-[15deg]  select-none">🌱</span>
-        <span className="absolute top-[38%] right-[2%] text-3xl opacity-15 rotate-[-12deg] select-none">🌱</span>
-        <span className="absolute bottom-[28%] left-[3%]  text-4xl opacity-20 rotate-[8deg]  select-none">🍃</span>
-        <span className="absolute bottom-[18%] right-[3%] text-4xl opacity-20 rotate-[-20deg] select-none">🌿</span>
-      </div>
 
-      {/* ── 전체 뷰포트 인터랙션 레이어 ────────────────────── */}
-      <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-full max-w-[420px] z-[1] pointer-events-none">
+      {/* ── 좌표 기반 UI (배경 렌더 영역 기준) ───────────────── */}
+      {ready && (
+        <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 1 }}>
 
-        {/* 헤더 */}
-        <div className="absolute top-0 left-0 right-0 z-[20] pointer-events-auto">
-          <AdBanner position="top" />
-          <div className="flex items-center justify-between px-5 pt-3 pb-1.5">
-            <h1 className="text-2xl font-display font-bold text-foreground tracking-tight">
-              Plant 2048
-            </h1>
-            <div className="flex items-center gap-2 bg-amber-50 border border-amber-200/80 rounded-full px-3 py-1.5 shadow-sm">
-              <span className="w-6 h-6 rounded-full bg-amber-400 flex items-center justify-center text-xs shadow-inner">🪙</span>
-              <div className="flex flex-col leading-none">
-                <span className="text-[9px] text-amber-600/60 font-semibold tracking-wide">Coin</span>
-                <span className="text-sm font-black text-amber-600">{player.coins.toLocaleString()}</span>
-              </div>
-            </div>
-          </div>
+          {/* ── 상단 광고 ────────────────────────────────────── */}
+          <TopAdBanner bg={bg} />
+
+          {/* ── 타이틀 ──────────────────────────────────────── */}
+          <HomeTitle bg={bg} />
+
+          {/* ── 코인 표시 ────────────────────────────────────── */}
+          <CoinDisplay coins={player.coins} bg={bg} />
+
+          {/* ── 메뉴 버튼 ────────────────────────────────────── */}
+          {[...leftMenuItems, ...rightMenuItems].map((item) => (
+            <HomeMenuButton
+              key={item.key}
+              item={item}
+              label={menuLabel[item.key] ?? item.key}
+              badge={menuBadge[item.key]}
+              bg={bg}
+              onClick={menuOnClick[item.key]}
+            />
+          ))}
+
+          {/* ── 스테이지 노드 맵 ─────────────────────────────── */}
+          <HomeStageMap
+            clearedLevel={player.clearedLevel}
+            bg={bg}
+            onSelectLevel={handleNodeSelect}
+          />
+
+          {/* ── START 버튼 ───────────────────────────────────── */}
+          <StartButton bg={bg} onClick={onStartGame} />
+
         </div>
+      )}
 
-        {/* 레벨 맵 */}
-        <LevelMap
-          player={player}
-          selectedLevel={selectedLevel}
-          onSelectLevel={setSelectedLevel}
-        />
-
-        {/* 왼쪽 메뉴: 미션·랭킹·도감 */}
-        <SideMenu
-          side="left"
-          items={[
-            {
-              label: "미션", emoji: "📋", imageSrc: "/icons/icon-mission.png",
-              badge: missionBadge > 0 ? missionBadge : undefined,
-              onClick: () => setShowMissionModal(true),
-            },
-            { label: "랭킹", emoji: "🏆", imageSrc: "/icons/icon-ranking.png", onClick: () => setActiveModal("ranking") },
-            { label: "도감", emoji: "📖", imageSrc: "/icons/icon-book.png",   onClick: () => setActiveModal("dogam")   },
-          ]}
-        />
-
-        {/* 오른쪽 메뉴: 아이템·상점·설정 */}
-        <SideMenu
-          side="right"
-          items={[
-            { label: "카드",   emoji: "🃏", imageSrc: "/icons/icon-card.png", onClick: () => setActiveModal("items")    },
-            { label: "상점",   emoji: "🏪", imageSrc: "/icons/icon-shop.png", onClick: () => setActiveModal("shop")     },
-            { label: "설정",   emoji: "⚙️",                                   onClick: () => setActiveModal("settings") },
-          ]}
-        />
-
-        {/* ── START 버튼 ───────────────────────────────── */}
-        <div
-          className="absolute z-[5] px-5 w-full pointer-events-auto"
-          style={{ left: "50%", top: "84.8%", transform: "translate(-50%, -50%)" }}
-        >
-          <button
-            onClick={onStartGame}
-            className="w-full py-4 rounded-full bg-primary text-white font-black text-xl tracking-widest shadow-xl hover:shadow-2xl hover:-translate-y-0.5 active:scale-95 transition-all duration-200"
-          >
-            START
-          </button>
-        </div>
-      </div>
-
-      {/* ── 하단 광고 (portal → transform 격리 문제 방지) ── */}
+      {/* ── 하단 광고 (portal) ──────────────────────────────── */}
       {createPortal(
         <div className="fixed bottom-0 left-0 right-0 z-[30]">
           <AdBanner position="bottom" />
@@ -180,7 +274,7 @@ export function FrontScreen({
         document.body,
       )}
 
-      {/* ── 미션 모달 ─────────────────────────────────────── */}
+      {/* ── 미션 모달 ─────────────────────────────────────────── */}
       {showMissionModal && (
         <MissionModal
           missions={missions}
@@ -193,17 +287,36 @@ export function FrontScreen({
         />
       )}
 
-      {/* ── 랭킹 모달 ─────────────────────────────────────── */}
-      {activeModal === "ranking" && (
-        <RankingModal onClose={closeModal} />
+      {activeModal === "ranking" && <RankingModal onClose={closeModal} />}
+
+      {activeModal === "cards" && (
+        <CardCollectionModal
+          player={player}
+          subscriptionState={{ isPremium: isPremiumActive, trialUsed: false, trialActive: false, trialExpiry: null }}
+          onClose={closeModal}
+          onOpenPremium={() => setActiveModal("premium")}
+        />
       )}
 
-      {/* ── 아이템 모달 ───────────────────────────────────── */}
+      {activeModal === "premium" && (
+        <PremiumPassModal
+          onBuy={async () => { await onBuyPremium?.(); closeModal(); }}
+          onClose={closeModal}
+        />
+      )}
+
+      {activeModal === "endless" && (
+        <EndlessDifficultyModal
+          onStart={(diff) => { closeModal(); onStartEndless?.(diff, false); }}
+          onContinue={(diff) => { closeModal(); onStartEndless?.(diff, true); }}
+          onClose={closeModal}
+        />
+      )}
+
       {activeModal === "items" && inventory && (
         <ItemsModal inventory={inventory} onClose={closeModal} />
       )}
 
-      {/* ── 홈 상점 모달 ──────────────────────────────────── */}
       {activeModal === "shop" && inventory && onBuyItem && (
         <HomeShopModal
           player={player}
@@ -211,56 +324,39 @@ export function FrontScreen({
           onBuyItem={onBuyItem}
           onEarnCoins={onEarnCoins}
           onClose={closeModal}
+          isPremiumActive={isPremiumActive}
+          onOpenPremium={() => setActiveModal("premium")}
         />
       )}
 
-      {/* ── 설정 모달 ─────────────────────────────────────── */}
       {activeModal === "settings" && onToggleSetting && (
-        <SettingsModal
-          settings={settings}
-          onToggle={onToggleSetting}
-          onClose={closeModal}
-        />
+        <SettingsModal settings={settings} onToggle={onToggleSetting} onClose={closeModal} />
       )}
 
-      {/* ── 도감 모달 ─────────────────────────────────────── */}
-      {activeModal === "dogam" && (
-        <DogamModal onClose={closeModal} />
-      )}
+      {activeModal === "dogam" && <DogamModal onClose={closeModal} />}
 
-      {/* ── 스테이지 정보 팝업 ────────────────────────────────── */}
-      {selectedLevel !== null && (
-        <StageInfoPopup
-          level={selectedLevel}
-          clearedLevel={player.clearedLevel}
-          onClose={() => setSelectedLevel(null)}
-          onStart={() => { setSelectedLevel(null); onStartGame(); }}
-        />
-      )}
-
-      {/* ── 랭킹 보상 팝업 (portal, 순차 표시) ──────────────── */}
+      {/* ── 랭킹 보상 팝업 ──────────────────────────────────── */}
       {rankingRewards.length > 0 && onClaimRankingReward && createPortal(
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm">
           <div className="w-full max-w-[300px] bg-white rounded-3xl p-6 shadow-2xl animate-modal-slide-up text-center">
-            <div className="w-16 h-16 bg-yellow-50 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-3">
-              🏆
-            </div>
-            <h3 className="text-base font-black text-foreground mb-1">랭킹 보상!</h3>
+            <div className="w-16 h-16 bg-yellow-50 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-3">🏆</div>
+            <h3 className="text-base font-black text-foreground mb-1">{t("ranking.rewardPopupTitle")}</h3>
             <p className="text-xs text-foreground/50 mb-1">
-              {PERIOD_LABEL[rankingRewards[0].type]} 누적 점수 {rankingRewards[0].rank}위
+              {t("ranking.rewardPeriodRank", {
+                period: rankingRewards[0].type === "daily"  ? t("ranking.periodDaily")   :
+                        rankingRewards[0].type === "weekly" ? t("ranking.periodWeekly")  :
+                        t("ranking.periodMonthly"),
+                rank: rankingRewards[0].rank,
+              })}
             </p>
-            <p className="text-2xl font-black text-amber-500 mb-5">
-              🪙 {rankingRewards[0].coins.toLocaleString()}
-            </p>
+            <p className="text-2xl font-black text-amber-500 mb-5">🪙 {rankingRewards[0].coins.toLocaleString()}</p>
             <button
               onClick={() => onClaimRankingReward(rankingRewards[0].periodKey)}
               className="w-full py-3 rounded-2xl bg-primary text-white font-black text-sm shadow-sm hover:bg-primary-hover active:scale-95 transition-all"
-            >
-              수령하기
-            </button>
+            >{t("ranking.claimReward")}</button>
             {rankingRewards.length > 1 && (
               <p className="mt-2 text-[10px] text-foreground/35">
-                +{rankingRewards.length - 1}개 보상 더 있음
+                {t("ranking.moreRewards", { count: rankingRewards.length - 1 })}
               </p>
             )}
           </div>
@@ -272,134 +368,200 @@ export function FrontScreen({
 }
 
 /* ============================================================
- * SideMenu — 좌/우 4개 아이콘 수직 버튼
+ * TopAdBanner — 배경 좌표계 기준 상단 고정
  * ============================================================ */
-interface SideMenuItem {
-  label:     string;
-  emoji:     string;
-  imageSrc?: string;   // /icons/*.png 경로 지정 시 이미지로 렌더
-  badge?:    number;
-  onClick:   () => void;
-}
-
-interface SideMenuProps {
-  side:  "left" | "right";
-  items: SideMenuItem[];
-}
-
-function SideMenu({ side, items }: SideMenuProps) {
+function TopAdBanner({ bg }: { bg: BgLayout }) {
+  const { ry: top } = toRenderPoint(0, 0, bg);
+  const h = (110 / DESIGN_H) * bg.renderH;
   return (
     <div
-      className={[
-        "absolute top-[18%] flex flex-col gap-2.5 z-10 pointer-events-auto",
-        side === "left" ? "left-1.5" : "right-1.5",
-      ].join(" ")}
+      className="pointer-events-auto"
+      style={{
+        position: "absolute",
+        left: 0, top, width: "100%", height: h,
+        zIndex: 30,
+      }}
     >
-      {items.map((item) => (
-        <button
-          key={item.label}
-          onClick={item.onClick}
-          className="relative flex flex-col items-center justify-center w-[68px] py-2.5 rounded-2xl bg-white shadow-md hover:shadow-lg active:scale-95 transition-all duration-150 border border-black/5"
-        >
-          {item.badge !== undefined && (
-            <span className="absolute top-1 right-1 min-w-[16px] h-4 bg-red-400 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-0.5">
-              {item.badge}
-            </span>
-          )}
-          {item.imageSrc
-            ? <img src={item.imageSrc} className="w-9 h-9 object-contain mb-1" alt={item.label} draggable={false} />
-            : <span className="text-2xl leading-none mb-1">{item.emoji}</span>
-          }
-          <span className="text-[10px] font-bold text-foreground/55 leading-none">{item.label}</span>
-        </button>
-      ))}
+      <AdBanner position="top" />
     </div>
   );
 }
 
 /* ============================================================
- * XpBar — 간결한 레벨 XP 진행 바
+ * HomeTitle — title.svg, width 기준 비율 유지
  * ============================================================ */
-function XpBar({ player }: { player: PlayerData }) {
-  const progress    = xpProgress(player);
-  const needed      = xpForNextLevel(player.level);
-  const pct         = Math.round(progress * 100);
-  const nextRewards = LEVEL_REWARDS[player.level + 1] ?? [];
+function HomeTitle({ bg }: { bg: BgLayout }) {
+  const { rx, ry, scaleX } = toRenderPoint(330, 175, bg);
+  const w = 500 * scaleX;
+  return (
+    <img
+      src="/title.svg"
+      alt="Plant 2048"
+      draggable={false}
+      style={{
+        position:      "absolute",
+        left:          rx,
+        top:           ry,
+        width:         w,
+        height:        "auto",
+        objectFit:     "contain",
+        zIndex:        10,
+        pointerEvents: "none",
+      }}
+    />
+  );
+}
+
+/* ============================================================
+ * CoinDisplay — 코인 표시
+ * ============================================================ */
+function CoinDisplay({ coins, bg }: { coins: number; bg: BgLayout }) {
+  const { rx, ry, scaleX } = toRenderPoint(840, 390, bg);
+  const fontSize = Math.max(11, 14 * scaleX);
+  return (
+    <div
+      style={{
+        position:      "absolute",
+        left:          rx,
+        top:           ry,
+        zIndex:        20,
+        pointerEvents: "none",
+        display:       "flex",
+        alignItems:    "center",
+        gap:           6 * scaleX,
+        background:    "rgba(255,248,230,0.88)",
+        border:        "1px solid rgba(217,170,90,0.45)",
+        borderRadius:  9999,
+        padding:       `${4 * scaleX}px ${10 * scaleX}px`,
+        boxShadow:     "0 2px 8px rgba(140,90,30,0.12)",
+        backdropFilter:"blur(4px)",
+      }}
+    >
+      <span style={{ fontSize: fontSize + 2, lineHeight: 1 }}>🪙</span>
+      <span style={{ fontSize, fontWeight: 800, color: "#a0640a", lineHeight: 1 }}>
+        {coins.toLocaleString()}
+      </span>
+    </div>
+  );
+}
+
+/* ============================================================
+ * HomeMenuButton — 배경 좌표계 기준 메뉴 카드
+ * ============================================================ */
+interface HomeMenuButtonProps {
+  item:    MenuItemDef;
+  label:   string;
+  badge?:  number;
+  bg:      BgLayout;
+  onClick: () => void;
+}
+
+function HomeMenuButton({ item, label, badge, bg, onClick }: HomeMenuButtonProps) {
+  const { rx, ry, scaleX, scaleY } = toRenderPoint(item.x, item.y, bg);
+  // 정사각형 카드: scaleX 기준으로 양쪽 동일 크기
+  const cardSize = Math.max(62, 170 * scaleX);
+  const cardW    = cardSize;
+  const cardH    = cardSize;
+  const radius   = Math.max(14, 28 * scaleX);
+  const iconSize = Math.max(36, cardSize * 0.60);
+  const fontSize = Math.max(10, 15 * scaleX);
 
   return (
-    <div className="flex items-center gap-2">
-      <span className="text-[11px] font-bold text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full flex-shrink-0 whitespace-nowrap">
-        Lv.{player.level}
-      </span>
-      <div className="flex-1">
-        <div className="w-full h-2 bg-black/8 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-primary to-emerald-400 rounded-full transition-all duration-500"
-            style={{ width: `${pct}%` }}
+    <button
+      onClick={onClick}
+      style={{
+        position:       "absolute",
+        left:           rx,
+        top:            ry,
+        width:          cardW,
+        height:         cardH,
+        borderRadius:   radius,
+        background:     item.highlight
+          ? "rgba(255,240,200,0.93)"
+          : "rgba(255,248,235,0.90)",
+        border:         item.highlight
+          ? "1.5px solid rgba(200,160,60,0.55)"
+          : "1px solid rgba(180,150,100,0.22)",
+        boxShadow:      "0 6px 18px rgba(80,50,20,0.10)",
+        backdropFilter: "blur(6px)",
+        display:        "flex",
+        flexDirection:  "column",
+        alignItems:     "center",
+        justifyContent: "center",
+        gap:            6,
+        padding:        8,
+        cursor:         "pointer",
+        zIndex:         20,
+        pointerEvents:  "auto",
+        transition:     "transform 0.15s ease, box-shadow 0.15s ease",
+      }}
+    >
+      {badge !== undefined && (
+        <span style={{
+          position:       "absolute",
+          top:            4 * scaleY,
+          right:          4 * scaleX,
+          minWidth:       16 * scaleX,
+          height:         16 * scaleX,
+          background:     "#f87171",
+          color:          "#fff",
+          fontSize:       10 * scaleX,
+          fontWeight:     700,
+          borderRadius:   9999,
+          display:        "flex",
+          alignItems:     "center",
+          justifyContent: "center",
+          padding:        `0 ${3 * scaleX}px`,
+        }}>
+          {badge}
+        </span>
+      )}
+
+      {/* 아이콘 wrapper — contain 처리 */}
+      <div style={{ width: iconSize, height: iconSize, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {item.imageSrc ? (
+          <img
+            src={item.imageSrc}
+            alt={label}
+            draggable={false}
+            style={{ maxWidth: "100%", maxHeight: "100%", width: "auto", height: "auto", objectFit: "contain", display: "block" }}
           />
-        </div>
-        {nextRewards.length > 0 && (
-          <p className="text-[9px] text-foreground/35 mt-0.5 truncate">
-            다음:{" "}
-            {nextRewards.map((r, i) => (
-              <span key={i} className="text-amber-500 font-semibold">
-                {r.type === "coins" ? `🪙${r.amount}` : `🎁${r.description}`}
-                {i < nextRewards.length - 1 ? " · " : ""}
-              </span>
-            ))}
-          </p>
+        ) : (
+          <span style={{ fontSize: iconSize * 0.65, lineHeight: 1 }}>{item.emoji}</span>
         )}
       </div>
-      <span className="text-[9px] text-foreground/30 flex-shrink-0 whitespace-nowrap">
-        {player.xp}/{needed}
+
+      <span style={{ fontSize, fontWeight: 700, color: "#6b5a42", lineHeight: 1, textAlign: "center" }}>
+        {label}
       </span>
-    </div>
+    </button>
   );
 }
 
 /* ============================================================
- * LevelMap — 배경 기준 고정 좌표 노드 맵
- *
- * 6개 노드를 1페이지로. clearedLevel이 6 경계를 넘으면
- * translateY CSS transition으로 다음 페이지 슬라이드.
+ * HomeStageMap — 20개 노드 페이지 기반 슬라이드
  * ============================================================ */
-
-/** 배경 이미지(918×2048) 기준 노드 중심 → 뷰포트 % (아래→위 순서) */
-const NODE_POSITIONS: { left: string; top: string }[] = [
-  { left: "49.8%", top: "76.6%" }, // level +0 (가장 낮은 레벨, 하단)
-  { left: "49.8%", top: "62.9%" },
-  { left: "49.7%", top: "49.2%" },
-  { left: "49.8%", top: "35.5%" },
-  { left: "49.8%", top: "21.8%" },
-  { left: "49.8%", top: "8.0%"  }, // level +5 (가장 높은 레벨, 상단)
-];
-
-/** 최대 페이지 수 (6레벨 × 10페이지 = 60레벨 지원) */
-const MAX_PAGES = 10;
-
-type NodeStatus = "done" | "current" | "available" | "locked";
-
-function LevelMap({
-  player,
-  selectedLevel,
+function HomeStageMap({
+  clearedLevel,
+  bg,
   onSelectLevel,
 }: {
-  player: PlayerData;
-  selectedLevel?: number | null;
-  onSelectLevel?: (level: number) => void;
+  clearedLevel:  number;
+  bg:            BgLayout;
+  onSelectLevel: (level: number) => void;
 }) {
-  const { clearedLevel } = player;
-  // 0-based 페이지: levels 1-6 → page 0, 7-12 → page 1 …
-  const currentPage = Math.floor(Math.max(0, clearedLevel) / 6);
+  const currentPage = Math.floor(Math.max(0, clearedLevel) / LEVELS_PER_PAGE);
 
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {/*
-       * 페이지를 아래에서 위로 쌓음:
-       *   page 0 → container 맨 아래 (top: (MAX_PAGES-1)*100dvh)
-       *   page N → 위로 올라감
-       * currentPage를 보려면 translateY = -(MAX_PAGES-1-currentPage)*100dvh
-       */}
+    <div
+      style={{
+        position:      "absolute",
+        inset:         0,
+        overflow:      "hidden",
+        pointerEvents: "none",
+        zIndex:        5,
+      }}
+    >
       <div
         style={{
           position:   "absolute",
@@ -413,7 +575,7 @@ function LevelMap({
         }}
       >
         {Array.from({ length: MAX_PAGES }, (_, pageIdx) => {
-          const pageStart = pageIdx * 6 + 1;
+          const pageStart = pageIdx * LEVELS_PER_PAGE + 1;
           return (
             <div
               key={pageIdx}
@@ -425,31 +587,29 @@ function LevelMap({
                 height:   "100dvh",
               }}
             >
-              {NODE_POSITIONS.map((pos, i) => {
-                const level = pageStart + i;
+              {STAGE_NODE_TEMPLATES.map((tmpl) => {
+                const level   = pageStart + (tmpl.stage - 1);
                 const status: NodeStatus =
                   level <= clearedLevel      ? "done"      :
                   level === clearedLevel + 1 ? "current"   :
                   level === clearedLevel + 2 ? "available" : "locked";
+
+                const { rx, ry, scaleX } = toRenderPoint(
+                  tmpl.cx + (tmpl.offsetX ?? 0),
+                  tmpl.cy + (tmpl.offsetY ?? 0),
+                  bg,
+                );
+
                 return (
-                  <div
+                  <StageNode
                     key={level}
-                    className="absolute"
-                    style={{
-                      left:          pos.left,
-                      top:           pos.top,
-                      transform:     "translate(-50%, -50%)",
-                      zIndex:        2,
-                      pointerEvents: "auto",
-                    }}
-                  >
-                    <LevelNode
-                      nodeLevel={level}
-                      status={status}
-                      isSelected={selectedLevel === level}
-                      onSelect={() => onSelectLevel?.(level)}
-                    />
-                  </div>
+                    level={level}
+                    status={status}
+                    x={rx}
+                    y={ry}
+                    scaleX={scaleX}
+                    onClick={() => onSelectLevel(level)}
+                  />
                 );
               })}
             </div>
@@ -461,215 +621,167 @@ function LevelMap({
 }
 
 /* ============================================================
- * LevelNode — 리프 원형 노드 (클릭 시 부모에 선택 레벨 전달)
+ * StageNode — stage.svg + 반투명 원형 배지 + 숫자
  * ============================================================ */
-interface LevelNodeProps {
-  nodeLevel:  number;
-  status:     NodeStatus;
-  isSelected: boolean;
-  onSelect:   () => void;
+interface StageNodeProps {
+  level:   number;
+  status:  NodeStatus;
+  x:       number;
+  y:       number;
+  scaleX:  number;
+  onClick: () => void;
 }
 
-function LevelNode({ nodeLevel, status, isSelected, onSelect }: LevelNodeProps) {
-  const isCurrent   = status === "current";
+function StageNode({ level, status, x, y, scaleX, onClick }: StageNodeProps) {
   const isDone      = status === "done";
-  const isAvailable = status === "available";
+  const isCurrent   = status === "current";
   const isLocked    = status === "locked";
 
-  /* 상태별 아이콘 */
-  const iconSrc = isDone
-    ? "/icons/node-complete.svg"
-    : isCurrent
-      ? "/icons/node-stay.svg"
-      : "/icons/node-hold.svg";   /* available + locked 모두 hold */
+  const nodeWidth = 144 * scaleX;  // 사과 이미지 1.5배 (96 → 144)
 
-  const iconSize = 64;
+  const imgFilter =
+    isDone      ? "saturate(0.6) brightness(0.88)" :
+    isCurrent   ? `drop-shadow(0 0 ${8 * scaleX}px rgba(230,190,30,0.95))` :
+    isLocked    ? "grayscale(1) brightness(1.6)" :
+    /* available */ "grayscale(1) brightness(1.6)";
+
+  // 노드 이미지(330×300 natural) 기준 — 상자 부분에 자연스럽게 맞도록
+  const badgeSize     = Math.max(14, 40 * scaleX);
+  const badgeFontSize = Math.max(8,  11 * scaleX);
 
   return (
-    /* 버튼만 flow에 포함 — 레이블은 absolute로 분리해 아이콘이 정확히 중앙 */
-    <div className="relative flex items-center justify-center">
-      {/* 스테이지 번호 — 아이콘 위에 absolute */}
-      <span className={[
-        "absolute bottom-full mb-1 text-[10px] font-bold leading-none whitespace-nowrap",
-        isSelected ? "text-primary" :
-        isCurrent  ? "text-amber-600" :
-        isLocked   ? "text-foreground/30" : "text-foreground/45",
-      ].join(" ")}>
-        {nodeLevel}
-      </span>
+    <div
+      style={{
+        position:       "absolute",
+        left:           x,
+        top:            y,
+        width:          nodeWidth,
+        transform:      "translate(-50%, -50%)",
+        pointerEvents:  isLocked ? "none" : "auto",
+        zIndex:         isCurrent ? 7 : 6,
+      }}
+    >
+      {/* 현재 스테이지 pulse ring */}
+      {isCurrent && (
+        <>
+          <span style={{
+            position: "absolute",
+            inset: -8 * scaleX,
+            borderRadius: "50%",
+            border: `${2 * scaleX}px solid rgba(255,210,60,0.7)`,
+            animation: "ping 1.2s cubic-bezier(0,0,0.2,1) infinite",
+            pointerEvents: "none",
+          }} />
+        </>
+      )}
 
+      {/* 노드 이미지 + 배지 컨테이너 */}
       <button
-        onClick={onSelect}
-        className="relative flex items-center justify-center cursor-pointer active:scale-90"
+        onClick={onClick}
         style={{
-          transform:  isSelected ? "scale(1.18)" : "scale(1)",
-          transition: "transform 0.18s ease, filter 0.18s ease",
-          filter: isSelected
-            ? "drop-shadow(0 0 8px rgba(255,255,255,0.95)) drop-shadow(0 0 16px rgba(80,180,60,0.7))"
-            : isCurrent
-              ? "drop-shadow(0 0 10px rgba(230,190,30,0.8))"
-              : "none",
-          opacity: 1,
+          display:    "block",
+          width:      "100%",
+          background: "none",
+          border:     "none",
+          padding:    0,
+          cursor:     isLocked ? "default" : "pointer",
+          position:   "relative",
         }}
-        aria-label={`스테이지 ${nodeLevel}`}
+        aria-label={`스테이지 ${level}`}
       >
+        {/* stage.svg — 원본 비율 유지 */}
         <img
-          src={iconSrc}
-          width={iconSize}
-          height={iconSize}
-          alt={`스테이지 ${nodeLevel}`}
+          src="/stage.svg"
+          alt={`스테이지 ${level}`}
           draggable={false}
-          style={{ display: "block" }}
+          style={{
+            display:    "block",
+            width:      "100%",
+            height:     "auto",
+            objectFit:  "contain",
+            filter:     imgFilter,
+            transition: "filter 0.2s",
+          }}
         />
 
-        {/* 현재 스테이지 pulse ring */}
-        {isCurrent && !isSelected && (
-          <>
-            <span className="absolute -inset-2 rounded-full border-2 border-yellow-300/70 animate-ping pointer-events-none" />
-            <span className="absolute -inset-3.5 rounded-full border border-yellow-200/30 pointer-events-none" />
-          </>
-        )}
+        {/* 반투명 원형 배지 + 숫자 (노드 하단 중앙 오버레이) */}
+        <div
+          style={{
+            position:           "absolute",
+            left:               "50%",
+            top:                "60%",
+            transform:          "translateX(-50%)",
+            width:              badgeSize,
+            height:             badgeSize,
+            borderRadius:       9999,
+            background:         (!isDone && !isCurrent) ? "rgba(70,70,70,0.88)" : "rgba(255,255,255,0.42)",
+            backdropFilter:     "blur(5px)",
+            WebkitBackdropFilter: "blur(5px)",
+            boxShadow:          "0 1px 6px rgba(0,0,0,0.08)",
+            display:            "flex",
+            alignItems:         "center",
+            justifyContent:     "center",
+            pointerEvents:      "none",
+          }}
+        >
+          <span
+            style={{
+              color:      "#fff",
+              fontSize:   badgeFontSize,
+              fontWeight: 800,
+              lineHeight: 1,
+              textShadow: "0 1px 4px rgba(0,0,0,0.4)",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {level}
+          </span>
+        </div>
       </button>
     </div>
   );
 }
 
 /* ============================================================
- * StageInfoPopup — 스테이지 노드 클릭 시 중앙 팝업
+ * StartButton — start_button.svg, 비율 유지
  * ============================================================ */
-function StageInfoPopup({
-  level,
-  clearedLevel,
-  onClose,
-  onStart,
-}: {
-  level:        number;
-  clearedLevel: number;
-  onClose:      () => void;
-  onStart:      () => void;
-}) {
-  const stageConfig = getStageConfig(level);
-  const rewards     = LEVEL_REWARDS[level] ?? [];
+function StartButton({ bg, onClick }: { bg: BgLayout; onClick: () => void }) {
+  const { rx, ry, scaleX } = toRenderPoint(365, 1715, bg);
+  const w = 430 * scaleX;
 
-  const status: NodeStatus =
-    level <= clearedLevel      ? "done"      :
-    level === clearedLevel + 1 ? "current"   :
-    level === clearedLevel + 2 ? "available" : "locked";
-
-  const isDone      = status === "done";
-  const isCurrent   = status === "current";
-  const isLocked    = status === "locked";
-  const canChallenge = isDone || isCurrent;
-
-  const soilCount  = stageConfig?.initialTiles.filter((t) => t.tileType === "soil").length  ?? 0;
-  const thornCount = stageConfig?.initialTiles.filter((t) => t.tileType === "thorn").length ?? 0;
-  const obstacleText = [
-    soilCount  > 0 ? `흙 ${soilCount}개`  : "",
-    thornCount > 0 ? `가시 ${thornCount}개` : "",
-  ].filter(Boolean).join(", ");
-
-  return createPortal(
-    <div
-      className="fixed inset-0 z-[150] flex items-center justify-center p-6 bg-black/35 backdrop-blur-[2px]"
-      onClick={onClose}
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        position:   "absolute",
+        left:       rx,
+        top:        ry,
+        width:      w,
+        background: "none",
+        border:     "none",
+        padding:    0,
+        cursor:     "pointer",
+        zIndex:     25,
+        pointerEvents: "auto",
+        transition: "transform 0.15s ease",
+      }}
+      onPointerDown={(e) => { (e.currentTarget as HTMLElement).style.transform = "scale(0.95)"; }}
+      onPointerUp={(e)   => { (e.currentTarget as HTMLElement).style.transform = "scale(1)"; }}
+      onPointerLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = "scale(1)"; }}
+      aria-label="START"
     >
-      <div
-        className="w-full max-w-[300px] bg-white rounded-3xl shadow-2xl overflow-hidden animate-modal-slide-up"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* ── 헤더 */}
-        <div className="relative bg-primary/8 px-5 pt-5 pb-4">
-          <button
-            onClick={onClose}
-            className="absolute top-3 right-3 w-7 h-7 rounded-full bg-foreground/10 hover:bg-foreground/18 flex items-center justify-center text-foreground/40 text-xs font-bold transition-all"
-          >✕</button>
-
-          <p className="text-[10px] text-foreground/40 font-bold tracking-widest uppercase">Stage</p>
-          <h3 className="text-2xl font-black text-foreground leading-tight">{level}</h3>
-          {stageConfig && (
-            <p className="text-xs text-foreground/45 mt-0.5">{stageConfig.name}</p>
-          )}
-
-          {/* 상태 뱃지 */}
-          <div className="mt-2">
-            {isDone      && <span className="inline-flex items-center gap-1 text-[10px] bg-emerald-100 text-emerald-600 font-bold px-2.5 py-0.5 rounded-full">✓ 클리어 완료</span>}
-            {isCurrent   && <span className="inline-flex items-center gap-1 text-[10px] bg-amber-100 text-amber-600 font-bold px-2.5 py-0.5 rounded-full">⚡ 도전 중</span>}
-            {status === "available" && <span className="inline-flex items-center gap-1 text-[10px] bg-sky-100 text-sky-500 font-bold px-2.5 py-0.5 rounded-full">🔓 해금됨</span>}
-            {isLocked    && <span className="inline-flex items-center gap-1 text-[10px] bg-foreground/8 text-foreground/35 font-bold px-2.5 py-0.5 rounded-full">🔒 잠김</span>}
-          </div>
-        </div>
-
-        {/* ── 본문 */}
-        <div className="px-5 py-4 flex flex-col gap-3">
-          {/* 목표 */}
-          {stageConfig ? (
-            <div>
-              <p className="text-[10px] font-bold text-foreground/35 uppercase tracking-wide mb-1.5">목표</p>
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2 text-sm">
-                  <span>🌿</span>
-                  <span className="font-bold text-foreground">{stageConfig.goal.targetValue} 타일 달성</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <span>⏱</span>
-                  <span className="text-foreground/55">최대 {stageConfig.maxTurns}턴</span>
-                </div>
-                {obstacleText && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <span>🪨</span>
-                    <span className="text-foreground/55">장애물: {obstacleText}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : (
-            <p className="text-sm text-foreground/30 text-center py-1">스테이지 정보 준비 중</p>
-          )}
-
-          {/* 보상 */}
-          {rewards.length > 0 && (
-            <div>
-              <p className="text-[10px] font-bold text-foreground/35 uppercase tracking-wide mb-1.5">클리어 보상</p>
-              <div className="flex flex-col gap-1">
-                {rewards.map((r, i) => (
-                  <div key={i} className="flex items-center gap-2 text-sm">
-                    <span>{r.type === "coins" ? "🪙" : "🎁"}</span>
-                    <span className="text-foreground/60">
-                      {r.type === "coins" ? `${r.amount} 코인` : r.description}
-                    </span>
-                    {isDone && <span className="ml-auto text-[10px] text-emerald-500 font-bold">수령 완료</span>}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* ── 하단 버튼 */}
-        <div className="px-5 pb-5">
-          {canChallenge ? (
-            <button
-              onClick={onStart}
-              className="w-full py-3 rounded-2xl bg-primary text-white font-black text-sm shadow-md hover:bg-primary-hover active:scale-95 transition-all"
-            >
-              {isDone ? "다시 도전" : "도전하기"}
-            </button>
-          ) : (
-            <div className="w-full py-3 rounded-2xl bg-foreground/6 text-center">
-              <p className="text-xs font-semibold text-foreground/30">
-                {isLocked ? "🔒 이전 스테이지를 클리어하세요" : "이전 스테이지 클리어 후 도전 가능"}
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>,
-    document.body,
+      <img
+        src="/start_button.svg"
+        alt="START"
+        draggable={false}
+        style={{ display: "block", width: "100%", height: "auto", objectFit: "contain" }}
+      />
+    </button>
   );
 }
 
 /* ============================================================
- * MissionModal — 일일/주간 미션 탭 모달
+ * MissionModal
  * ============================================================ */
 interface MissionModalProps {
   missions:        MissionState[];
@@ -681,12 +793,8 @@ interface MissionModalProps {
   onClose:         () => void;
 }
 
-function MissionModal({
-  missions, weeklyMissions,
-  onClaimDaily, onClaimWeekly,
-  onEarnCoins, onAdWatched,
-  onClose,
-}: MissionModalProps) {
+function MissionModal({ missions, weeklyMissions, onClaimDaily, onClaimWeekly, onEarnCoins, onAdWatched, onClose }: MissionModalProps) {
+  const { t } = useTranslation();
   const [tab, setTab] = useState<"daily" | "weekly">("daily");
 
   return createPortal(
@@ -698,53 +806,34 @@ function MissionModal({
         className="bg-white w-full sm:max-w-sm rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col h-[85dvh] animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-300"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* 헤더 */}
         <div className="flex items-center justify-between px-5 pt-5 pb-3 flex-shrink-0">
           <h2 className="text-lg font-display font-bold text-foreground flex items-center gap-1.5">
             <img src="/icons/icon-mission.png" className="w-6 h-6 object-contain" alt="" draggable={false} />
-            미션
+            {t("missions.title")}
           </h2>
-          <button
-            onClick={onClose}
-            className="w-7 h-7 rounded-full bg-board flex items-center justify-center text-foreground/40 hover:bg-cell transition-all text-sm"
-          >✕</button>
+          <button onClick={onClose} className="w-7 h-7 rounded-full bg-board flex items-center justify-center text-foreground/40 hover:bg-cell transition-all text-sm">✕</button>
         </div>
 
-        {/* 탭 */}
         <div className="flex gap-1 px-5 pb-3 flex-shrink-0">
-          {(["daily", "weekly"] as const).map((t) => (
+          {(["daily", "weekly"] as const).map((tabKey) => (
             <button
-              key={t}
-              onClick={() => setTab(t)}
+              key={tabKey}
+              onClick={() => setTab(tabKey)}
               className={[
                 "flex-1 py-2 rounded-xl text-sm font-bold transition-all",
-                tab === t
-                  ? "bg-primary text-white shadow-sm"
-                  : "bg-board text-foreground/50 hover:bg-cell",
+                tab === tabKey ? "bg-primary text-white shadow-sm" : "bg-board text-foreground/50 hover:bg-cell",
               ].join(" ")}
             >
-              {t === "daily" ? "📅 일일" : "📆 주간"}
+              {tabKey === "daily" ? t("missions.daily") : t("missions.weekly")}
             </button>
           ))}
         </div>
 
-        {/* 콘텐츠 */}
         <div className="flex-1 overflow-y-auto px-5 pb-5">
-          {tab === "daily" ? (
-            <DailyMissionList
-              missions={missions}
-              onClaim={onClaimDaily}
-              onEarnCoins={onEarnCoins}
-              onAdWatched={onAdWatched}
-            />
-          ) : (
-            <WeeklyMissionList
-              weeklyMissions={weeklyMissions}
-              onClaim={onClaimWeekly}
-              onEarnCoins={onEarnCoins}
-              onAdWatched={onAdWatched}
-            />
-          )}
+          {tab === "daily"
+            ? <DailyMissionList missions={missions} onClaim={onClaimDaily} onEarnCoins={onEarnCoins} onAdWatched={onAdWatched} />
+            : <WeeklyMissionList weeklyMissions={weeklyMissions} onClaim={onClaimWeekly} onEarnCoins={onEarnCoins} onAdWatched={onAdWatched} />
+          }
         </div>
       </div>
     </div>,
@@ -752,65 +841,35 @@ function MissionModal({
   );
 }
 
-/* ── 일일 미션 목록 ──────────────────────────────────────── */
-function DailyMissionList({
-  missions,
-  onClaim,
-  onEarnCoins,
-  onAdWatched,
-}: {
-  missions:     MissionState[];
-  onClaim?:     (id: MissionId) => number;
-  onEarnCoins?: (amount: number) => void;
-  onAdWatched?: () => void;
+function DailyMissionList({ missions, onClaim, onEarnCoins, onAdWatched }: {
+  missions: MissionState[]; onClaim?: (id: MissionId) => number;
+  onEarnCoins?: (amount: number) => void; onAdWatched?: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col gap-2">
       <FreeCoinsButton onEarnCoins={onEarnCoins} onAdWatched={onAdWatched} />
       {DAILY_MISSIONS.map((mission) => {
-        const state  = missions.find((s) => s.id === mission.id);
+        const state = missions.find((s) => s.id === mission.id);
         const status = state?.status ?? "incomplete";
-        const prog   = state?.progress ?? 0;
-
+        const prog = state?.progress ?? 0;
         return (
-          <div
-            key={mission.id}
-            className={[
-              "flex items-center gap-3 px-3 py-2.5 rounded-2xl transition-all",
-              status === "claimed"
-                ? "bg-black/4 opacity-50"
-                : status === "complete"
-                  ? "bg-emerald-50/80 ring-1 ring-emerald-200"
-                  : "bg-board/60",
-            ].join(" ")}
-          >
+          <div key={mission.id} className={["flex items-center gap-3 px-3 py-2.5 rounded-2xl transition-all", status === "claimed" ? "bg-black/4 opacity-50" : status === "complete" ? "bg-emerald-50/80 ring-1 ring-emerald-200" : "bg-board/60"].join(" ")}>
             <span className="text-xl flex-shrink-0">{mission.emoji}</span>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-foreground leading-tight">{mission.title}</p>
-              <p className="text-xs text-foreground/50">{mission.description}</p>
+              <p className="text-sm font-bold text-foreground leading-tight">{t(mission.title)}</p>
+              <p className="text-xs text-foreground/50">{t(mission.description)}</p>
               {mission.target > 1 && status === "incomplete" && (
                 <div className="mt-1 w-full h-1.5 bg-board rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-primary/50 rounded-full transition-all"
-                    style={{ width: `${(prog / mission.target) * 100}%` }}
-                  />
+                  <div className="h-full bg-primary/50 rounded-full transition-all" style={{ width: `${(prog / mission.target) * 100}%` }} />
                 </div>
               )}
             </div>
             <div className="flex-shrink-0 flex flex-col items-end gap-0.5">
               <span className="text-xs font-bold text-amber-500">🪙{mission.reward}</span>
-              {status === "complete" && (
-                <button
-                  onClick={() => onClaim?.(mission.id)}
-                  className="text-[10px] font-bold bg-emerald-500 text-white px-2.5 py-1 rounded-full hover:bg-emerald-600 active:scale-95 transition-all"
-                >수령</button>
-              )}
-              {status === "claimed" && (
-                <span className="text-[10px] text-foreground/30 font-medium">완료 ✓</span>
-              )}
-              {status === "incomplete" && mission.target > 1 && (
-                <span className="text-[10px] text-foreground/30">{prog}/{mission.target}</span>
-              )}
+              {status === "complete" && <button onClick={() => onClaim?.(mission.id)} className="text-[10px] font-bold bg-emerald-500 text-white px-2.5 py-1 rounded-full hover:bg-emerald-600 active:scale-95 transition-all">{t("ranking.claimReward")}</button>}
+              {status === "claimed" && <span className="text-[10px] text-foreground/30 font-medium">✓</span>}
+              {status === "incomplete" && mission.target > 1 && <span className="text-[10px] text-foreground/30">{prog}/{mission.target}</span>}
             </div>
           </div>
         );
@@ -819,67 +878,35 @@ function DailyMissionList({
   );
 }
 
-/* ── 주간 미션 목록 ──────────────────────────────────────── */
-function WeeklyMissionList({
-  weeklyMissions,
-  onClaim,
-  onEarnCoins,
-  onAdWatched,
-}: {
-  weeklyMissions: WeeklyMissionState[];
-  onClaim?:       (id: WeeklyMissionId) => number;
-  onEarnCoins?:   (amount: number) => void;
-  onAdWatched?:   () => void;
+function WeeklyMissionList({ weeklyMissions, onClaim, onEarnCoins, onAdWatched }: {
+  weeklyMissions: WeeklyMissionState[]; onClaim?: (id: WeeklyMissionId) => number;
+  onEarnCoins?: (amount: number) => void; onAdWatched?: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col gap-2">
-      {/* 무료 코인 (광고) */}
       <FreeCoinsButton onEarnCoins={onEarnCoins} onAdWatched={onAdWatched} />
-
       {WEEKLY_MISSIONS.map((mission) => {
-        const state  = weeklyMissions.find((s) => s.id === mission.id);
+        const state = weeklyMissions.find((s) => s.id === mission.id);
         const status = state?.status ?? "incomplete";
-        const prog   = state?.progress ?? 0;
-
+        const prog = state?.progress ?? 0;
         return (
-          <div
-            key={mission.id}
-            className={[
-              "flex items-center gap-3 px-3 py-2.5 rounded-2xl transition-all",
-              status === "claimed"
-                ? "bg-black/4 opacity-50"
-                : status === "complete"
-                  ? "bg-emerald-50/80 ring-1 ring-emerald-200"
-                  : "bg-board/60",
-            ].join(" ")}
-          >
+          <div key={mission.id} className={["flex items-center gap-3 px-3 py-2.5 rounded-2xl transition-all", status === "claimed" ? "bg-black/4 opacity-50" : status === "complete" ? "bg-emerald-50/80 ring-1 ring-emerald-200" : "bg-board/60"].join(" ")}>
             <span className="text-xl flex-shrink-0">{mission.emoji}</span>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-foreground leading-tight">{mission.title}</p>
-              <p className="text-xs text-foreground/50">{mission.description}</p>
+              <p className="text-sm font-bold text-foreground leading-tight">{t(mission.title)}</p>
+              <p className="text-xs text-foreground/50">{t(mission.description)}</p>
               {mission.target > 1 && status === "incomplete" && (
                 <div className="mt-1 w-full h-1.5 bg-board rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-amber-400/60 rounded-full transition-all"
-                    style={{ width: `${(prog / mission.target) * 100}%` }}
-                  />
+                  <div className="h-full bg-amber-400/60 rounded-full transition-all" style={{ width: `${(prog / mission.target) * 100}%` }} />
                 </div>
               )}
             </div>
             <div className="flex-shrink-0 flex flex-col items-end gap-0.5">
               <span className="text-xs font-bold text-amber-500">🪙{mission.reward}</span>
-              {status === "complete" && (
-                <button
-                  onClick={() => onClaim?.(mission.id)}
-                  className="text-[10px] font-bold bg-emerald-500 text-white px-2.5 py-1 rounded-full hover:bg-emerald-600 active:scale-95 transition-all"
-                >수령</button>
-              )}
-              {status === "claimed" && (
-                <span className="text-[10px] text-foreground/30 font-medium">완료 ✓</span>
-              )}
-              {status === "incomplete" && mission.target > 1 && (
-                <span className="text-[10px] text-foreground/30">{prog}/{mission.target}</span>
-              )}
+              {status === "complete" && <button onClick={() => onClaim?.(mission.id)} className="text-[10px] font-bold bg-emerald-500 text-white px-2.5 py-1 rounded-full hover:bg-emerald-600 active:scale-95 transition-all">{t("ranking.claimReward")}</button>}
+              {status === "claimed" && <span className="text-[10px] text-foreground/30 font-medium">✓</span>}
+              {status === "incomplete" && mission.target > 1 && <span className="text-[10px] text-foreground/30">{prog}/{mission.target}</span>}
             </div>
           </div>
         );
@@ -888,26 +915,15 @@ function WeeklyMissionList({
   );
 }
 
-/* ============================================================
- * FreeCoinsButton — 광고 시청 무료 코인
- * ============================================================ */
-interface FreeCoinsButtonProps {
-  onEarnCoins?: (amount: number) => void;
-  onAdWatched?: () => void;
-}
-
-function FreeCoinsButton({ onEarnCoins, onAdWatched }: FreeCoinsButtonProps) {
+/* ── FreeCoinsButton ────────────────────────────────────────── */
+function FreeCoinsButton({ onEarnCoins, onAdWatched }: { onEarnCoins?: (n: number) => void; onAdWatched?: () => void }) {
+  const { t } = useTranslation();
   const [adState, setAdState] = useState<"idle" | "watching">("idle");
   const [adInfo,  setAdInfo]  = useState(getAdCoinState());
-
   useEffect(() => { setAdInfo(getAdCoinState()); }, []);
 
   if (adInfo.remaining <= 0) {
-    return (
-      <div className="w-full py-3 rounded-2xl bg-board/40 border border-board text-center text-xs text-foreground/30 font-medium mb-1">
-        오늘의 무료 코인을 모두 받았어요
-      </div>
-    );
+    return <div className="w-full py-3 rounded-2xl bg-board/40 border border-board text-center text-xs text-foreground/30 font-medium mb-1">{t("common.watchAd")}</div>;
   }
 
   const handleWatch = async () => {
@@ -916,65 +932,29 @@ function FreeCoinsButton({ onEarnCoins, onAdWatched }: FreeCoinsButtonProps) {
     const { watchAdForCoins } = await import("@/utils/adService");
     const earned = await watchAdForCoins();
     setAdState("idle");
-    if (earned > 0) {
-      onEarnCoins?.(earned);
-      onAdWatched?.();
-      setAdInfo(getAdCoinState());
-    }
+    if (earned > 0) { onEarnCoins?.(earned); onAdWatched?.(); setAdInfo(getAdCoinState()); }
   };
 
   return (
-    <button
-      onClick={handleWatch}
-      disabled={adState === "watching"}
-      className={[
-        "w-full py-2.5 rounded-2xl border-2 font-bold text-sm transition-all active:scale-95 mb-1",
-        adState === "watching"
-          ? "border-amber-200 bg-amber-50 text-amber-400 cursor-wait"
-          : "border-amber-300 bg-amber-50 text-amber-600 hover:bg-amber-100",
-      ].join(" ")}
-    >
+    <button onClick={handleWatch} disabled={adState === "watching"} className={["w-full py-2.5 rounded-2xl border-2 font-bold text-sm transition-all active:scale-95 mb-1", adState === "watching" ? "border-amber-200 bg-amber-50 text-amber-400 cursor-wait" : "border-amber-300 bg-amber-50 text-amber-600 hover:bg-amber-100"].join(" ")}>
       {adState === "watching" ? (
         <span className="flex items-center justify-center gap-2">
           <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
           </svg>
-          광고 시청 중...
+          {t("game.watchingAd")}
         </span>
-      ) : (
-        `📺 무료 코인 받기 +100 (오늘 ${adInfo.remaining}회 남음)`
-      )}
+      ) : `📺 ${t("common.watchAd")} +100 (${adInfo.remaining})`}
     </button>
   );
 }
 
-/* ── 최고 점수 표시 ────────────────────────────────────────── */
-function TodayStats() {
-  let best = 0;
-  try {
-    const saved = localStorage.getItem("plant2048_bestScore");
-    if (saved) best = parseInt(saved, 10);
-  } catch { /* noop */ }
-
-  if (best === 0) return null;
-
-  return (
-    <div className="text-center text-xs text-foreground/40 font-medium">
-      역대 최고: <span className="text-primary font-bold">{best.toLocaleString()}</span>
-    </div>
-  );
-}
-
-/* ── 광고 배너 placeholder ─────────────────────────────────── */
+/* ── AdBanner placeholder ───────────────────────────────────── */
 function AdBanner({ position }: { position: "top" | "bottom" }) {
   return (
     <div
-      className={[
-        "w-full h-10 flex items-center justify-center text-[11px] font-medium select-none flex-shrink-0 relative z-[1]",
-        "bg-white/55 backdrop-blur-sm text-foreground/30",
-        position === "top" ? "border-b border-white/40" : "border-t border-white/40",
-      ].join(" ")}
+      className={["w-full h-10 flex items-center justify-center text-[11px] font-medium select-none flex-shrink-0", "bg-white/55 backdrop-blur-sm text-foreground/30", position === "top" ? "border-b border-white/40" : "border-t border-white/40"].join(" ")}
       aria-hidden="true"
     >
       AD
