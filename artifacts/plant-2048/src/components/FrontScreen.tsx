@@ -34,7 +34,7 @@ const DESIGN_W = 1152;
 const DESIGN_H = 2048;
 
 /* ── Background layout (home-bg.svg fills 100% × 100% of container) ── */
-interface BgLayout { offsetX: number; offsetY: number; renderW: number; renderH: number }
+interface BgLayout { offsetX: number; offsetY: number; renderW: number; renderH: number; containerW: number; containerH: number }
 
 function toRenderPoint(designX: number, designY: number, bg: BgLayout) {
   const scaleX = bg.renderW / DESIGN_W;
@@ -137,7 +137,7 @@ export function FrontScreen({
 }: FrontScreenProps) {
   const { t } = useTranslation();
   const containerRef                        = useRef<HTMLDivElement>(null);
-  const [bg, setBg]                         = useState<BgLayout>({ offsetX: 0, offsetY: 0, renderW: 0, renderH: 0 });
+  const [bg, setBg]                         = useState<BgLayout>({ offsetX: 0, offsetY: 0, renderW: 0, renderH: 0, containerW: 0, containerH: 0 });
   const [showMissionModal, setShowMissionModal] = useState(false);
   const [activeModal,      setActiveModal]      = useState<ActiveModal>(null);
 
@@ -156,7 +156,7 @@ export function FrontScreen({
       // 수평: 중앙 정렬 / 수직: top 정렬 (하단 스테이지 잘림 방지)
       const offsetX = (width  - renderW) / 2;
       const offsetY = Math.max(0, (height - renderH) / 2); // 위쪽 기준 정렬
-      setBg({ offsetX, offsetY, renderW, renderH });
+      setBg({ offsetX, offsetY, renderW, renderH, containerW: width, containerH: height });
     };
     update();
     const ro = new ResizeObserver(update);
@@ -475,12 +475,19 @@ function HomeMenuButton({ item, label, badge, bg, onClick }: HomeMenuButtonProps
   const iconSize = Math.max(36, cardSize * 0.60);
   const fontSize = Math.max(10, 15 * scaleX);
 
+  // cover 모드에서 메뉴가 화면 밖으로 잘리지 않도록 x 위치 클램핑
+  const screenPad = 6;
+  const isLeftMenu = item.x < DESIGN_W / 2;
+  const clampedX = isLeftMenu
+    ? Math.max(screenPad, rx)                                      // 왼쪽: 최소 screenPad
+    : Math.min(bg.containerW - cardW - screenPad, rx);             // 오른쪽: 최대 화면 우측 끝
+
   return (
     <button
       onClick={onClick}
       style={{
         position:       "absolute",
-        left:           rx,
+        left:           clampedX,
         top:            ry,
         width:          cardW,
         height:         cardH,
