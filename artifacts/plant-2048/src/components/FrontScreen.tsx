@@ -653,7 +653,9 @@ function StageNode({ level, status, x, y, scaleX, onClick }: StageNodeProps) {
   const isCurrent   = status === "current";
   const isLocked    = status === "locked";
 
-  const nodeWidth = 144 * scaleX;
+  // stage_ready/stay/end: 115×130 비율 → 높이 기준으로 크기 고정
+  const nodeHeight = 100 * scaleX;
+  const nodeWidth  = nodeHeight * (115 / 130); // 자연 비율 유지
 
   // 상태별 이미지
   const nodeSrc =
@@ -717,8 +719,8 @@ function StageNode({ level, status, x, y, scaleX, onClick }: StageNodeProps) {
           draggable={false}
           style={{
             display:    "block",
-            width:      "100%",
-            height:     "auto",
+            width:      nodeWidth,
+            height:     nodeHeight,
             objectFit:  "contain",
             filter:     imgFilter,
             transition: "filter 0.2s",
