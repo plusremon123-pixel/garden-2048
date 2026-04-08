@@ -221,8 +221,8 @@ export function FrontScreen({
         className="absolute inset-0 pointer-events-none"
         style={{
           backgroundImage:    "url(/home-bg.svg)",
-          backgroundSize:     "100% 100%",
-          backgroundPosition: "top left",
+          backgroundSize:     "cover",
+          backgroundPosition: "center center",
           backgroundRepeat:   "no-repeat",
           zIndex: 0,
         }}
