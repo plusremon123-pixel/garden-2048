@@ -153,9 +153,9 @@ export function FrontScreen({
       const scale  = Math.max(scaleX, scaleY); // cover = 큰 쪽 기준
       const renderW = DESIGN_W * scale;
       const renderH = DESIGN_H * scale;
-      // 중앙 정렬 offset (잘리는 부분은 음수)
+      // 수평: 중앙 정렬 / 수직: top 정렬 (하단 스테이지 잘림 방지)
       const offsetX = (width  - renderW) / 2;
-      const offsetY = (height - renderH) / 2;
+      const offsetY = Math.max(0, (height - renderH) / 2); // 위쪽 기준 정렬
       setBg({ offsetX, offsetY, renderW, renderH });
     };
     update();
@@ -231,7 +231,7 @@ export function FrontScreen({
         style={{
           backgroundImage:    "url(/home-bg.svg)",
           backgroundSize:     "cover",
-          backgroundPosition: "center center",
+          backgroundPosition: "center top",
           backgroundRepeat:   "no-repeat",
           zIndex: 0,
         }}
@@ -568,7 +568,7 @@ function HomeStageMap({
         inset:         0,
         overflow:      "hidden",
         pointerEvents: "none",
-        zIndex:        5,
+        zIndex:        25,  // 메뉴(20), 타이틀(10) 위에 표시
       }}
     >
       <div
