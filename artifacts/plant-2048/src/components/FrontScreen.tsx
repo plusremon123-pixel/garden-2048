@@ -624,7 +624,7 @@ function StageNode({ level, status, x, y, scaleX, onClick }: StageNodeProps) {
   const isLocked    = status === "locked";
 
   // stage_ready/stay/end: 115×130 비율 → 높이 기준으로 크기 고정
-  const nodeHeight = 100 * scaleX;
+  const nodeHeight = 130 * scaleX;
   const nodeWidth  = nodeHeight * (115 / 130); // 자연 비율 유지
 
   // 상태별 이미지
@@ -639,8 +639,8 @@ function StageNode({ level, status, x, y, scaleX, onClick }: StageNodeProps) {
     : undefined;
 
   // 노드 이미지(330×300 natural) 기준 — 상자 부분에 자연스럽게 맞도록
-  const badgeSize     = Math.max(14, 40 * scaleX);
-  const badgeFontSize = Math.max(8,  11 * scaleX);
+  const badgeSize     = Math.max(18, 52 * scaleX);
+  const badgeFontSize = Math.max(10, 14 * scaleX);
 
   return (
     <div
