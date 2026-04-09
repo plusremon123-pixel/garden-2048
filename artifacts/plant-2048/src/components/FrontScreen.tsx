@@ -507,7 +507,7 @@ function HomeStageMap({
         inset:         0,
         overflow:      "hidden",
         pointerEvents: "none",
-        zIndex:        25,  // 메뉴(20), 타이틀(10) 위에 표시
+        zIndex:        10,  // 메뉴(20) 아래, 타이틀(10)과 동일
       }}
     >
       <div
