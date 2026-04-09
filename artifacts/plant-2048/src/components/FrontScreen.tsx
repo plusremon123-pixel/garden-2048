@@ -496,24 +496,26 @@ function HomeMenuButton({ item, label, badge, bg, onClick }: HomeMenuButtonProps
       <div
         style={{
           position:       "absolute",
-          left:           6 * scaleX,
-          right:          6 * scaleX,
+          left:           2,
+          right:          2,
           top:            item.textTopRatio * cardH,
           bottom:         (6 / 179) * cardH,  // shadow 영역 제외
           background:     item.bgColor,
           display:        "flex",
           alignItems:     "center",
           justifyContent: "center",
+          overflow:       "hidden",
           pointerEvents:  "none",
         }}
       >
         <span style={{
-          fontSize:   Math.max(9, 14 * scaleX),
-          fontWeight: 800,
-          color:      item.textColor,
-          lineHeight: 1,
-          textAlign:  "center",
-          whiteSpace: "nowrap",
+          fontSize:      Math.max(12, 30 * scaleX),
+          fontWeight:    700,
+          color:         item.textColor,
+          lineHeight:    1,
+          textAlign:     "center",
+          whiteSpace:    "nowrap",
+          letterSpacing: "-0.3px",
         }}>
           {label}
         </span>
