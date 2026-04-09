@@ -495,17 +495,20 @@ function HomeMenuButton({ item, label, badge, bg, onClick }: HomeMenuButtonProps
       {/* 번역 라벨 오버레이 — SVG 내 고정 한국어 텍스트를 덮고 다국어 표시 */}
       <div
         style={{
-          position:       "absolute",
-          left:           2,
-          right:          2,
-          top:            item.textTopRatio * cardH,
-          bottom:         (6 / 179) * cardH,  // shadow 영역 제외
-          background:     item.bgColor,
-          display:        "flex",
-          alignItems:     "center",
-          justifyContent: "center",
-          overflow:       "hidden",
-          pointerEvents:  "none",
+          position:              "absolute",
+          left:                  0,
+          right:                 0,
+          top:                   item.textTopRatio * cardH,
+          bottom:                (6 / 179) * cardH,   // shadow 영역 제외
+          background:            item.bgColor,
+          display:               "flex",
+          alignItems:            "center",
+          justifyContent:        "center",
+          overflow:              "hidden",
+          pointerEvents:         "none",
+          // 카드 SVG의 하단 둥근 모서리(rx=30)에 맞춰 반경 적용
+          borderBottomLeftRadius:  30 * scaleX,
+          borderBottomRightRadius: 30 * scaleX,
         }}
       >
         <span style={{
