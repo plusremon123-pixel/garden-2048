@@ -1,7 +1,7 @@
 {
   "version": 2,
-  "buildCommand": "pnpm --filter @workspace/plant-2048 build",
-  "outputDirectory": "artifacts/plant-2048/dist/public",
+  "buildCommand": "pnpm --filter @workspace/garden-2048 build",
+  "outputDirectory": "artifacts/garden-2048/dist/public",
   "installCommand": "pnpm install",
   "framework": null
 }

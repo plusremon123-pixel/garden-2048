@@ -1,18 +1,18 @@
 @echo off
-title Plant 2048 Android Build
+title Garden 2048 Android Build
 
 set LOGFILE=C:\Users\19002857\Desktop\plant2048\build-android-log.txt
 echo Build started: %DATE% %TIME% > %LOGFILE%
 
 set NODEJS_EXE=C:\Program Files\nodejs\node.exe
 set PNPM_CMD=C:\Users\19002857\AppData\Roaming\npm\pnpm.cmd
-set PROJECT_DIR=C:\Users\19002857\Desktop\plant2048\artifacts\plant-2048
+set PROJECT_DIR=C:\Users\19002857\Desktop\plant2048\artifacts\garden-2048
 set VITE_BIN=%PROJECT_DIR%\node_modules\.bin\vite.cmd
 set CAP_BIN=%PROJECT_DIR%\node_modules\.bin\cap.cmd
 set PATH=C:\Program Files\nodejs;%APPDATA%\npm;%PATH%
 
 echo ========================================
-echo   Plant 2048 - Android Build
+echo   Garden 2048 - Android Build
 echo ========================================
 echo.
 

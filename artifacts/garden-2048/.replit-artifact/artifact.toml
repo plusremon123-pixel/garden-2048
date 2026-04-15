@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Garden 2048"
+version = "1.0.0"
+id = "artifacts/garden-2048"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21480
+
+[services.development]
+run = "pnpm --filter @workspace/garden-2048 run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/garden-2048", "run", "build" ]
+publicDir = "artifacts/garden-2048/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21480"
+BASE_PATH = "/"

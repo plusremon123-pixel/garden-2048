@@ -1,7 +1,7 @@
 [build]
   base    = "."
-  command = "pnpm --filter @workspace/plant-2048 build"
-  publish = "artifacts/plant-2048/dist/public"
+  command = "pnpm --filter @workspace/garden-2048 build"
+  publish = "artifacts/garden-2048/dist/public"
 
 [build.environment]
   NODE_VERSION = "20"

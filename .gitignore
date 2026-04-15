@@ -49,10 +49,10 @@ Thumbs.db
 .local/
 
 # Android build artifacts
-artifacts/plant-2048/android/.gradle/
-artifacts/plant-2048/android/app/build/
-artifacts/plant-2048/android/build/
-artifacts/plant-2048/android/local.properties
+artifacts/garden-2048/android/.gradle/
+artifacts/garden-2048/android/app/build/
+artifacts/garden-2048/android/build/
+artifacts/garden-2048/android/local.properties
 
 # Build logs & temp files
 build-android-log.txt

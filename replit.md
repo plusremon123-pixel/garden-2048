@@ -50,7 +50,7 @@ Every package extends `tsconfig.base.json` which sets `composite: true`. The roo
 
 ## Artifacts
 
-### `artifacts/plant-2048` (`@workspace/plant-2048`)
+### `artifacts/garden-2048` (`@workspace/garden-2048`)
 
 식물 테마 2048 퍼즐 게임. 순수 프론트엔드 (백엔드 없음).
 

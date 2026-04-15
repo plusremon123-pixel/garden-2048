@@ -2,15 +2,15 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "plant-2048 dev",
+      "name": "garden-2048 dev",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--filter", "@workspace/plant-2048", "run", "dev"],
+      "runtimeArgs": ["--filter", "@workspace/garden-2048", "run", "dev"],
       "port": 5175
     },
     {
-      "name": "plant-2048 preview",
+      "name": "garden-2048 preview",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--filter", "@workspace/plant-2048", "run", "serve"],
+      "runtimeArgs": ["--filter", "@workspace/garden-2048", "run", "serve"],
       "port": 5176
     }
   ]

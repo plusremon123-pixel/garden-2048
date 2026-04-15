@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Garden 2048</string>
+    <string name="title_activity_main">Garden 2048</string>
+    <string name="package_name">com.garden2048.app</string>
+    <string name="custom_url_scheme">com.garden2048.app</string>
+</resources>
