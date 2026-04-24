@@ -128,7 +128,7 @@ export function Board({
 
         {/* 합쳐지는 중인 타일 (뒤에 렌더, z-0) */}
         {graveyard.map((tile) => (
-          <Tile key={tile.id} data={tile} themeId={themeId} isGhost />
+          <Tile key={tile.id} data={tile} themeId={themeId} isGhost gridSize={gridSize} />
         ))}
 
         {/* 활성 타일 */}
@@ -138,6 +138,7 @@ export function Board({
             data={tile}
             themeId={themeId}
             selectMode={selectMode}
+            gridSize={gridSize}
             onClick={selectMode && onTileClick ? () => onTileClick(tile.id) : undefined}
           />
         ))}

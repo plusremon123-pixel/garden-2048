@@ -13,6 +13,7 @@ interface TileProps {
   themeId?: string;
   isGhost?: boolean;
   selectMode?: boolean;
+  gridSize?: number;
   onClick?: () => void;
 }
 
@@ -21,6 +22,7 @@ export function Tile({
   themeId = "plant",
   isGhost = false,
   selectMode = false,
+  gridSize = 4,
   onClick,
 }: TileProps) {
   const { t } = useTranslation();
@@ -91,6 +93,12 @@ export function Tile({
       hp >= 3 ? "bg-slate-600 text-slate-100" :
       hp === 2 ? "bg-slate-500 text-slate-100" :
                   "bg-slate-400 text-slate-100";
+    /* 6×6 이상의 작은 셀: 이모지 크기 축소 */
+    const isSmallCell = gridSize > 4;
+    const emojiCls = isSmallCell ? "text-base leading-none" : "text-xl md:text-2xl leading-none";
+    /* HP 표시: 반복 이모지(폭 넘침) 대신 ♥ + 숫자 뱃지로 통일 */
+    const hpDots = "♥".repeat(hp);
+    const hpCls  = isSmallCell ? "text-[9px] font-bold leading-none tracking-tight" : "text-[11px] font-bold leading-none";
     return (
       <div
         className={cn("tile-wrapper", isGhost && "z-0")}
@@ -101,8 +109,8 @@ export function Tile({
           "tile-inner", rockBg,
           selectMode && !isGhost && "ring-2 ring-yellow-300/80 ring-offset-1 cursor-pointer hover:brightness-95",
         )}>
-          <span className="text-xl md:text-2xl leading-none">🪨</span>
-          <span className="text-xs font-bold leading-none">{"❤️".repeat(hp)}</span>
+          <span className={emojiCls}>🪨</span>
+          <span className={hpCls}>{hpDots}</span>
         </div>
       </div>
     );
