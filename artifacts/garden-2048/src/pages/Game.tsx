@@ -504,6 +504,11 @@ export default function Game({
     const justUnlockedLv100   = endIsWin && player.clearedLevel === 98;
     const justUnlockedLv400   = endIsWin && player.clearedLevel === 398;
 
+    /* 계절 전환 감지: 현재 스테이지 → 다음 스테이지에서 계절이 바뀌는지 확인 */
+    const currentStageNum = player.clearedLevel + 1;
+    const justChangedSeason = endIsWin &&
+      getSeason(currentStageNum) !== getSeason(currentStageNum + 1);
+
     /* 스테이지 클리어 판정 */
     if (stageConfig) {
       /* 스테이지 모드: 목표 타일 달성 = 클리어 */
@@ -594,6 +599,11 @@ export default function Game({
       resetGame();
       setCardUnlockGroup('lv400');
       setShowCardUnlock(true);
+    } else if (justChangedSeason) {
+      /* 계절 전환: 홈으로 이동 → FrontScreen이 계절 변화를 감지하여 애니메이션 재생 */
+      resetSelection();
+      resetGame();
+      onHome();
     } else if (action === "reset") {
       resetSelection();
       resetGame();
