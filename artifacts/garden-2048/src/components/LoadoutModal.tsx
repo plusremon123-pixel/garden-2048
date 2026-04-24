@@ -163,7 +163,7 @@ export function LoadoutModal({
         )}
 
         {/* ── 본문 */}
-        <div className="px-4 py-3 flex flex-col gap-3">
+        <div className="px-4 py-4 flex flex-col gap-4">
 
           {/* ── 카드 선택 */}
           {cardsUnlocked && (
@@ -215,7 +215,7 @@ export function LoadoutModal({
               )}
 
               {/* ── 카드 그리드 (항상 3장) */}
-              <div className="grid grid-cols-3 gap-2 mt-1.5">
+              <div className="grid grid-cols-3 gap-2.5 mt-2">
                 {activeCards.map((card) => {
                   const selected          = selectedCard === card.id;
                   const isPremCard        = card.isPremium ?? false;
@@ -227,7 +227,7 @@ export function LoadoutModal({
                       <button
                         onClick={() => !isLocked && onSelectCard(card.id)}
                         disabled={isLocked}
-                        className="w-full aspect-square flex flex-col items-center justify-center gap-1.5 rounded-2xl border-2 transition-all active:scale-95"
+                        className="w-full aspect-square flex flex-col items-center justify-center gap-1 rounded-2xl border-2 transition-all active:scale-95 p-2.5"
                         style={isLocked
                           ? {
                               borderColor: theme.borderColor,
@@ -247,22 +247,22 @@ export function LoadoutModal({
                         }
                       >
                         <span
-                          className="text-2xl leading-none"
+                          className="text-xl leading-none"
                           style={isGoldenSunflower
                             ? { filter: "sepia(1) saturate(3) hue-rotate(-10deg) brightness(1.15) drop-shadow(0 0 3px #f59e0b)" }
                             : undefined
                           }
                         >{card.emoji}</span>
                         {isGoldenSunflower && (
-                          <span style={{ position: "absolute", top: 5, left: 5, fontSize: "11px", lineHeight: 1, pointerEvents: "none" }}>✨</span>
+                          <span style={{ position: "absolute", top: 5, left: 5, fontSize: "10px", lineHeight: 1, pointerEvents: "none" }}>✨</span>
                         )}
                         <span
-                          className="text-sm font-bold leading-tight text-center px-1 flex items-center justify-center"
+                          className="text-xs font-bold leading-tight text-center flex items-center justify-center"
                           style={{
                             color: selected
                               ? (isPremCard ? "#92400e" : theme.btnPrimary)
                               : (isPremCard ? "#b45309" : theme.textSecondary),
-                            height: "2.5em",
+                            height: "2.4em",
                           }}
                         >
                           {cardName(card.id)}
@@ -295,7 +295,7 @@ export function LoadoutModal({
           {/* ── 아이템 선택 */}
           <section>
             <SectionLabel title={t("loadout.selectItem")} badge={t("loadout.itemCount")} done={selectedItems[0] !== null && selectedItems[1] !== null} theme={theme} />
-            <div className="grid grid-cols-3 gap-2 mt-1.5">
+            <div className="grid grid-cols-3 gap-2.5 mt-2">
               {LOADOUT_ITEMS.map((item) => {
                 const selected = selectedItemSet.has(item.id);
                 const slotIdx  = selectedItems.indexOf(item.id as LoadoutItemId);
@@ -303,24 +303,24 @@ export function LoadoutModal({
                   <div key={item.id} className="relative">
                     <button
                       onClick={() => onToggleItem(item.id)}
-                      className="w-full aspect-square flex flex-col items-center justify-center gap-1.5 rounded-2xl border-2 transition-all active:scale-95"
+                      className="w-full aspect-square flex flex-col items-center justify-center gap-1 rounded-2xl border-2 transition-all active:scale-95 p-2.5"
                       style={selected
                         ? { borderColor: theme.btnPrimary, background: theme.btnPrimary + "15" }
                         : { borderColor: theme.borderColor, background: theme.panelColor }
                       }
                     >
-                      <span className="text-2xl leading-none">{item.emoji}</span>
+                      <span className="text-xl leading-none">{item.emoji}</span>
                       <span
-                        className="text-sm font-bold leading-tight text-center px-1 flex items-center justify-center"
+                        className="text-xs font-bold leading-tight text-center flex items-center justify-center"
                         style={{
                           color: selected ? theme.btnPrimary : theme.textSecondary,
-                          height: "2.5em",
+                          height: "2.4em",
                         }}
                       >
                         {itemName(item.id)}
                       </span>
                       <span
-                        className="text-xs font-semibold px-1.5 py-0.5 rounded-full"
+                        className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
                         style={selected
                           ? { background: theme.btnPrimary + "20", color: theme.btnPrimary }
                           : { background: theme.borderColor + "40", color: theme.textMuted }
