@@ -104,12 +104,15 @@ const SEASON_MENU_PALETTE: Record<Season, { bg: string; text: string; shadow: st
   winter: { bg: "#BDD5EF", text: "#122E62", shadow: "rgba(18,46,98,0.60)"  },
 };
 
-/* ── 계절별 START 버튼 색상 ─────────────────────────────── */
-const SEASON_START_PALETTE: Record<Season, { top: string; bot: string; shadow: string; text: string }> = {
-  spring: { top: "#7DCB58", bot: "#4AAA28", shadow: "#2E7810", text: "#183C08" },
-  summer: { top: "#FFD050", bot: "#F09000", shadow: "#B87000", text: "#4A2400" },
-  autumn: { top: "#E87840", bot: "#C84820", shadow: "#8A2A08", text: "#FFF5F0" },
-  winter: { top: "#78A8DC", bot: "#3C6CB8", shadow: "#1E4888", text: "#F0F5FF" },
+/* ── 계절별 START 버튼 CSS filter
+ *  원본 SVG는 황금/앰버 색상(hue≈38°)
+ *  spring: 초록(+80°) / summer: 원본 유지 / autumn: 주황-빨강(-22°) / winter: 파랑(+175°)
+ */
+const SEASON_START_FILTER: Record<Season, string> = {
+  spring: "hue-rotate(78deg) saturate(1.2) brightness(1.05)",
+  summer: "saturate(1.1) brightness(1.05)",
+  autumn: "hue-rotate(-22deg) saturate(1.4) brightness(0.97)",
+  winter: "hue-rotate(175deg) saturate(0.85) brightness(1.08)",
 };
 
 /* ── 계절별 타이틀 CSS filter ───────────────────────────── */
@@ -870,13 +873,11 @@ function StageNode({ level, status, season, x, y, scaleX, onClick }: StageNodePr
 }
 
 /* ============================================================
- * StartButton — 계절별 CSS pill 버튼
+ * StartButton — start_button.svg + 계절별 CSS filter
  * ============================================================ */
 function StartButton({ bg, season, onClick }: { bg: BgLayout; season: Season; onClick: () => void }) {
   const { rx, ry, scaleX } = toRenderPoint(365, 1715, bg);
-  const w   = 430 * scaleX;
-  const h   = 108 * scaleX;
-  const sp  = SEASON_START_PALETTE[season];
+  const w = 430 * scaleX;
 
   return (
     <button
@@ -890,31 +891,28 @@ function StartButton({ bg, season, onClick }: { bg: BgLayout; season: Season; on
         left:          rx,
         top:           ry,
         width:         w,
-        height:        h,
-        background:    `linear-gradient(to bottom, ${sp.top}, ${sp.bot})`,
-        boxShadow:     `0 7px 0 ${sp.shadow}, 0 12px 20px rgba(0,0,0,0.20)`,
+        background:    "none",
         border:        "none",
-        borderRadius:  h / 2,
+        padding:       0,
         cursor:        "pointer",
         zIndex:        25,
         pointerEvents: "auto",
-        transition:    "transform 0.15s ease, background 0.5s ease, box-shadow 0.5s ease",
-        display:       "flex",
-        alignItems:    "center",
-        justifyContent:"center",
+        transition:    "transform 0.15s ease",
       }}
     >
-      <span style={{
-        color:       sp.text,
-        fontSize:    Math.max(18, 42 * scaleX),
-        fontWeight:  900,
-        letterSpacing: "0.12em",
-        fontFamily:  "var(--font-display, sans-serif)",
-        textShadow:  `0 1px 2px rgba(255,255,255,0.35)`,
-        userSelect:  "none",
-      }}>
-        START
-      </span>
+      <img
+        src="/start_button.svg"
+        alt="START"
+        draggable={false}
+        style={{
+          display:    "block",
+          width:      "100%",
+          height:     "auto",
+          objectFit:  "contain",
+          filter:     SEASON_START_FILTER[season],
+          transition: "filter 0.6s ease",
+        }}
+      />
     </button>
   );
 }
