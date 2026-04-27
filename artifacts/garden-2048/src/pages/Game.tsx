@@ -78,6 +78,8 @@ interface GameProps {
   subscriptionState?:    SubscriptionState;
   onStartTrial?:         () => void;
   onBuyPremium?:         () => Promise<void>;
+  /** DEV 전용: 외부(App)에서 강제 승리 함수를 받아가기 위한 ref */
+  devForceWinRef?:       React.MutableRefObject<(() => void) | null>;
 }
 
 export default function Game({
@@ -92,6 +94,7 @@ export default function Game({
   subscriptionState,
   onStartTrial,
   onBuyPremium,
+  devForceWinRef,
 }: GameProps) {
   const { t, lang } = useTranslation();
   /* ── 구독 상태 ───────────────────────────────────────── */
@@ -130,7 +133,14 @@ export default function Game({
     spawnTileAt,
     boardClean,
     setScoreMultiplier,
+    forceWin,
   } = useGame(stageConfig);
+
+  /* DEV 전용: 외부에서 강제 승리 호출 가능하도록 ref에 등록 */
+  useEffect(() => {
+    if (devForceWinRef) devForceWinRef.current = forceWin;
+    return () => { if (devForceWinRef) devForceWinRef.current = null; };
+  }, [devForceWinRef, forceWin]);
 
   /* ── 로드아웃 상태 ───────────────────────────────────── */
   const {

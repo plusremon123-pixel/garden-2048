@@ -409,6 +409,11 @@ export function useGame(
     gameState.activeTiles as Record<string, TileData>,
   ).reduce((max, tile) => (isObstacle(tile) ? max : Math.max(max, tile.value)), 2);
 
+  /** DEV 전용: 즉시 승리 처리 */
+  const forceWin = useCallback(() => {
+    setGameState(s => ({ ...s, hasWon: true, hasLost: false }));
+  }, []);
+
   return {
     ...gameState,
     bestScore,
@@ -432,6 +437,7 @@ export function useGame(
     spawnTileAt,
     boardClean,
     setScoreMultiplier,
+    forceWin,
     showWinModal: gameState.hasWon && !continuePlaying,
   };
 }

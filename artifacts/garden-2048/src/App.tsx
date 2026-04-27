@@ -9,7 +9,7 @@
  * 계절 CSS 변수를 clearedLevel 변경 시마다 전역 주입한다.
  * ============================================================ */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAppState } from "@/hooks/useAppState";
 import { usePlayer } from "@/hooks/usePlayer";
 import { useMissions } from "@/hooks/useMissions";
@@ -47,6 +47,9 @@ void initAdmob();
 export default function App() {
   const { currentScreen, selectedThemeId, selectTheme, goToTutorial, goToGame, goToEndlessSelect, goToEndless, goToFront } =
     useAppState();
+
+  /** DEV 전용: Game 컴포넌트의 강제 승리 함수를 보관 */
+  const devForceWinRef = useRef<(() => void) | null>(null);
 
   /* ── 스플래시 완료 핸들러 ───────────────────────── */
   const handleSplashDone = () => {
@@ -212,6 +215,7 @@ export default function App() {
               subscriptionState={sub}
               onStartTrial={startTrial}
               onBuyPremium={buyPremium}
+              devForceWinRef={devForceWinRef}
             />
           )}
         </div>
@@ -291,6 +295,19 @@ export default function App() {
               background: "#fef2f2", color: "#dc2626", cursor: "pointer", lineHeight: 1.4,
             }}
           >Reset</button>
+
+          {/* 구분선 */}
+          <div style={{ height: 1, background: "#cbd5e1", margin: "2px 0" }} />
+
+          {/* 플레이 자동 완료 (현재 게임 화면에서만 동작) */}
+          <button
+            onClick={() => devForceWinRef.current?.()}
+            style={{
+              fontSize: 10, fontWeight: 700, padding: "3px 7px",
+              borderRadius: 8, border: "1.5px solid #86efac",
+              background: "#f0fdf4", color: "#16a34a", cursor: "pointer", lineHeight: 1.4,
+            }}
+          >✅ Complete</button>
         </div>
       )}
     </div>
