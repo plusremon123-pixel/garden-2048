@@ -283,9 +283,9 @@ export default function App() {
 
           {/* 계절 전환 테스트 (전환 직전 스테이지) */}
           {([
-            { label: "🌸 249",  lv: 248 },
-            { label: "☀️ 499", lv: 498 },
-            { label: "🍂 749", lv: 748 },
+            { label: "🌸 260",  lv: 259 },
+            { label: "☀️ 500", lv: 499 },
+            { label: "🍂 760", lv: 759 },
           ] as const).map(({ label, lv }) => (
             <button
               key={lv}

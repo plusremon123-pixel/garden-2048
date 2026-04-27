@@ -8,15 +8,15 @@ export type Season = "spring" | "summer" | "autumn" | "winter";
 
 /**
  * stage 번호 → 계절
- *   1  ~ 249  = spring   (249 클리어 시 전환)
- *   250 ~ 499  = summer   (499 클리어 시 전환)
- *   500 ~ 749  = autumn   (749 클리어 시 전환)
- *   750 ~ 1000 = winter
+ *   1  ~ 260  = spring   (260 클리어 시 전환)
+ *   261 ~ 500  = summer   (500 클리어 시 전환)
+ *   501 ~ 760  = autumn   (760 클리어 시 전환)
+ *   761 ~ 1000 = winter
  */
 export function getSeason(stage: number): Season {
-  if (stage <= 249) return "spring";
-  if (stage <= 499) return "summer";
-  if (stage <= 749) return "autumn";
+  if (stage <= 260) return "spring";
+  if (stage <= 500) return "summer";
+  if (stage <= 760) return "autumn";
   return "winter";
 }
 
