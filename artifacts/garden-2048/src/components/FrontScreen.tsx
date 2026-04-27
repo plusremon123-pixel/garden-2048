@@ -87,13 +87,38 @@ const MAX_PAGES       = 5;
 
 /* ── Menu data ─────────────────────────────────────────────── */
 interface MenuItemDef {
-  key:       string;
-  x:         number;
-  y:         number;
-  iconPng:   string;  // PNG 아이콘 경로
-  bgColor:   string;  // 카드 배경색
-  textColor: string;  // 라벨 텍스트 색상
+  key:         string;
+  x:           number;
+  y:           number;
+  iconPng:     string;  // PNG 아이콘 경로
+  bgColor:     string;  // 카드 배경색
+  textColor:   string;  // 라벨 텍스트 색상
+  shadowColor?: string; // 하단 3D 쉐도우 색 (없으면 bgColor 기반 자동)
 }
+
+/* ── 계절별 메뉴 카드 색상 ────────────────────────────────── */
+const SEASON_MENU_PALETTE: Record<Season, { bg: string; text: string; shadow: string }> = {
+  spring: { bg: "#D8EFBE", text: "#1E5A10", shadow: "rgba(28,82,14,0.60)"  },
+  summer: { bg: "#FFE8A0", text: "#7A3800", shadow: "rgba(180,80,0,0.60)"  },
+  autumn: { bg: "#F5C898", text: "#6B1C00", shadow: "rgba(130,35,0,0.60)"  },
+  winter: { bg: "#BDD5EF", text: "#122E62", shadow: "rgba(18,46,98,0.60)"  },
+};
+
+/* ── 계절별 START 버튼 색상 ─────────────────────────────── */
+const SEASON_START_PALETTE: Record<Season, { top: string; bot: string; shadow: string; text: string }> = {
+  spring: { top: "#7DCB58", bot: "#4AAA28", shadow: "#2E7810", text: "#183C08" },
+  summer: { top: "#FFD050", bot: "#F09000", shadow: "#B87000", text: "#4A2400" },
+  autumn: { top: "#E87840", bot: "#C84820", shadow: "#8A2A08", text: "#FFF5F0" },
+  winter: { top: "#78A8DC", bot: "#3C6CB8", shadow: "#1E4888", text: "#F0F5FF" },
+};
+
+/* ── 계절별 타이틀 CSS filter ───────────────────────────── */
+const SEASON_TITLE_FILTER: Record<Season, string> = {
+  spring: "none",
+  summer: "sepia(0.25) saturate(1.4) hue-rotate(12deg)",
+  autumn: "sepia(0.35) saturate(1.5) hue-rotate(-18deg)",
+  winter: "saturate(0.55) hue-rotate(195deg) brightness(1.08)",
+};
 
 type NodeStatus = "done" | "current" | "available" | "locked";
 
@@ -220,16 +245,17 @@ export function FrontScreen({
    *   settings:     minTextY≈502,    card-rel≈123, ratio≈0.687 → safe 0.65
    *   subscribe:    minTextY≈722,    card-rel≈130, ratio≈0.726 → safe 0.69
    */
+  const mp = SEASON_MENU_PALETTE[season];
   const leftMenuItems: MenuItemDef[] = [
-    { key: "mission",  x:  37, y: 166, iconPng: "/menu-mission.png",   bgColor: "#F8E6C6", textColor: "#4C2E0C" },
-    { key: "card",     x:  37, y: 379, iconPng: "/menu-card.png",      bgColor: "#F8E6C6", textColor: "#4C2E0C" },
-    { key: "infinite", x:  37, y: 592, iconPng: "/menu-infinite.png",  bgColor: "#7F239D", textColor: "#F4FFF8" },
+    { key: "mission",  x:  37, y: 166, iconPng: "/menu-mission.png",  bgColor: mp.bg, textColor: mp.text, shadowColor: mp.shadow },
+    { key: "card",     x:  37, y: 379, iconPng: "/menu-card.png",     bgColor: mp.bg, textColor: mp.text, shadowColor: mp.shadow },
+    { key: "infinite", x:  37, y: 592, iconPng: "/menu-infinite.png", bgColor: "#7F239D", textColor: "#F4FFF8", shadowColor: "rgba(81,9,104,0.65)" },
   ];
   const rightMenuItems: MenuItemDef[] = [
-    { key: "shop",      x: 906, y: 166, iconPng: "/menu-shop.png",      bgColor: "#F8E6C6", textColor: "#4C2E0C" },
-    { key: "settings",  x: 906, y: 379, iconPng: "/menu-settings.png",  bgColor: "#F8E6C6", textColor: "#4C2E0C" },
+    { key: "shop",     x: 906, y: 166, iconPng: "/menu-shop.png",     bgColor: mp.bg, textColor: mp.text, shadowColor: mp.shadow },
+    { key: "settings", x: 906, y: 379, iconPng: "/menu-settings.png", bgColor: mp.bg, textColor: mp.text, shadowColor: mp.shadow },
     ...(!isPremiumActive ? [
-      { key: "subscribe", x: 906, y: 592, iconPng: "/menu-subscribe.png", bgColor: "#FFAE00", textColor: "#6D1D00" },
+      { key: "subscribe", x: 906, y: 592, iconPng: "/menu-subscribe.png", bgColor: "#FFAE00", textColor: "#6D1D00", shadowColor: "rgba(239,120,0,0.65)" },
     ] : []),
   ];
 
@@ -293,7 +319,7 @@ export function FrontScreen({
         <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 1 }}>
 
           {/* ── 타이틀 ──────────────────────────────────────── */}
-          <HomeTitle bg={bg} />
+          <HomeTitle bg={bg} season={season} />
 
 
           {/* ── 메뉴 버튼 ────────────────────────────────────── */}
@@ -317,7 +343,7 @@ export function FrontScreen({
           />
 
           {/* ── START 버튼 ───────────────────────────────────── */}
-          <StartButton bg={bg} onClick={onStartGame} />
+          <StartButton bg={bg} season={season} onClick={onStartGame} />
 
         </div>
       )}
@@ -409,13 +435,13 @@ export function FrontScreen({
 /* ============================================================
  * HomeTitle — title.svg, width 기준 비율 유지
  * ============================================================ */
-function HomeTitle({ bg }: { bg: BgLayout }) {
+function HomeTitle({ bg, season }: { bg: BgLayout; season: Season }) {
   const { ry, scaleX } = toRenderPoint(388, 162, bg);
   const w = 344 * scaleX * 1.2;
   return (
     <img
       src="/title.svg"
-      alt="Plant 2048"
+      alt="Garden 2048"
       draggable={false}
       style={{
         position:      "absolute",
@@ -427,6 +453,8 @@ function HomeTitle({ bg }: { bg: BgLayout }) {
         objectFit:     "contain",
         zIndex:        10,
         pointerEvents: "none",
+        filter:        SEASON_TITLE_FILTER[season],
+        transition:    "filter 0.6s ease",
       }}
     />
   );
@@ -492,11 +520,8 @@ function HomeMenuButton({ item, label, badge, bg, onClick }: HomeMenuButtonProps
     ? Math.max(screenPad, rx)
     : Math.min(bg.containerW - cardW - screenPad, rx);
 
-  // SVG filter 색상 기반 하단 솔리드 쉐도우 (3D 카드 효과)
-  const shadowColor =
-    item.bgColor === "#F8E6C6" ? "rgba(197,154,104,1.0)" :
-    item.bgColor === "#FFAE00" ? "rgba(239,120,0,1.0)"   :
-                                 "rgba(81,9,104,1.0)";
+  // 3D 카드 하단 쉐도우: item.shadowColor 우선, 없으면 기존 fallback
+  const shadowColor = item.shadowColor ?? "rgba(197,154,104,1.0)";
   const cardShadow = `0 6px 0 ${shadowColor}, 0 10px 18px rgba(0,0,0,0.13)`;
 
   return (
@@ -845,39 +870,51 @@ function StageNode({ level, status, season, x, y, scaleX, onClick }: StageNodePr
 }
 
 /* ============================================================
- * StartButton — start_button.svg, 비율 유지
+ * StartButton — 계절별 CSS pill 버튼
  * ============================================================ */
-function StartButton({ bg, onClick }: { bg: BgLayout; onClick: () => void }) {
+function StartButton({ bg, season, onClick }: { bg: BgLayout; season: Season; onClick: () => void }) {
   const { rx, ry, scaleX } = toRenderPoint(365, 1715, bg);
-  const w = 430 * scaleX;
+  const w   = 430 * scaleX;
+  const h   = 108 * scaleX;
+  const sp  = SEASON_START_PALETTE[season];
 
   return (
     <button
       onClick={onClick}
-      style={{
-        position:   "absolute",
-        left:       rx,
-        top:        ry,
-        width:      w,
-        background: "none",
-        border:     "none",
-        padding:    0,
-        cursor:     "pointer",
-        zIndex:     25,
-        pointerEvents: "auto",
-        transition: "transform 0.15s ease",
-      }}
       onPointerDown={(e) => { (e.currentTarget as HTMLElement).style.transform = "scale(0.95)"; }}
       onPointerUp={(e)   => { (e.currentTarget as HTMLElement).style.transform = "scale(1)"; }}
       onPointerLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = "scale(1)"; }}
       aria-label="START"
+      style={{
+        position:      "absolute",
+        left:          rx,
+        top:           ry,
+        width:         w,
+        height:        h,
+        background:    `linear-gradient(to bottom, ${sp.top}, ${sp.bot})`,
+        boxShadow:     `0 7px 0 ${sp.shadow}, 0 12px 20px rgba(0,0,0,0.20)`,
+        border:        "none",
+        borderRadius:  h / 2,
+        cursor:        "pointer",
+        zIndex:        25,
+        pointerEvents: "auto",
+        transition:    "transform 0.15s ease, background 0.5s ease, box-shadow 0.5s ease",
+        display:       "flex",
+        alignItems:    "center",
+        justifyContent:"center",
+      }}
     >
-      <img
-        src="/start_button.svg"
-        alt="START"
-        draggable={false}
-        style={{ display: "block", width: "100%", height: "auto", objectFit: "contain" }}
-      />
+      <span style={{
+        color:       sp.text,
+        fontSize:    Math.max(18, 42 * scaleX),
+        fontWeight:  900,
+        letterSpacing: "0.12em",
+        fontFamily:  "var(--font-display, sans-serif)",
+        textShadow:  `0 1px 2px rgba(255,255,255,0.35)`,
+        userSelect:  "none",
+      }}>
+        START
+      </span>
     </button>
   );
 }
