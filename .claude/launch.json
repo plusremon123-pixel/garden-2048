@@ -12,6 +12,18 @@
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["--filter", "@workspace/garden-2048", "run", "serve"],
       "port": 5176
+    },
+    {
+      "name": "mockup-sandbox dev",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@workspace/mockup-sandbox", "run", "dev"],
+      "port": 8081
+    },
+    {
+      "name": "api-server dev",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@workspace/api-server", "run", "dev"],
+      "port": 8080
     }
   ]
 }

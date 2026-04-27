@@ -61,3 +61,4 @@ node_out.txt
 node_ver.txt
 node_ver2.txt
 pnpm_out.txt
+.claude/worktrees/
