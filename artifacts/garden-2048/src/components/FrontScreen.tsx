@@ -98,7 +98,7 @@ interface MenuItemDef {
 
 /* ── 계절별 메뉴 카드 색상 ────────────────────────────────── */
 const SEASON_MENU_PALETTE: Record<Season, { bg: string; text: string; shadow: string }> = {
-  spring: { bg: "#D8EFBE", text: "#1E5A10", shadow: "rgba(28,82,14,0.60)"  },
+  spring: { bg: "#F9D8E6", text: "#6B1035", shadow: "rgba(107,16,53,0.55)" },
   summer: { bg: "#FFE8A0", text: "#7A3800", shadow: "rgba(180,80,0,0.60)"  },
   autumn: { bg: "#F5C898", text: "#6B1C00", shadow: "rgba(130,35,0,0.60)"  },
   winter: { bg: "#BDD5EF", text: "#122E62", shadow: "rgba(18,46,98,0.60)"  },
@@ -109,7 +109,7 @@ const SEASON_MENU_PALETTE: Record<Season, { bg: string; text: string; shadow: st
  *  spring: 초록(+80°) / summer: 원본 유지 / autumn: 주황-빨강(-22°) / winter: 파랑(+175°)
  */
 const SEASON_START_FILTER: Record<Season, string> = {
-  spring: "hue-rotate(78deg) saturate(1.2) brightness(1.05)",
+  spring: "hue-rotate(-30deg) saturate(1.3) brightness(1.02)",
   summer: "saturate(1.1) brightness(1.05)",
   autumn: "hue-rotate(-22deg) saturate(1.4) brightness(0.97)",
   winter: "hue-rotate(175deg) saturate(0.85) brightness(1.08)",
