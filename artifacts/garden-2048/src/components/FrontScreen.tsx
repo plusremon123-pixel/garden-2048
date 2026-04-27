@@ -625,7 +625,19 @@ function HomeMenuButton({ item, label, badge, bg, onClick }: HomeMenuButtonProps
 }
 
 /* ============================================================
- * HomeStageMap — 20개 노드 페이지 기반 슬라이드
+ * HomeStageMap — 20개 노드 페이지 기반 슬라이드 (부동 윈도우)
+ *
+ * 기존: MAX_PAGES=5 고정 범위(스테이지 1-100)
+ * 수정: actualPage를 중심으로 MAX_PAGES 크기의 윈도우를 부동시켜
+ *       스테이지 249/499/749 등 고단계에서도 올바른 노드를 표시한다.
+ *
+ * ── 윈도우 계산 ──────────────────────────────────────────
+ *   actualPage  = floor(clearedLevel / 20)
+ *   windowStart = max(0, actualPage - HALF)
+ *   visualSlot  = actualPage - windowStart   ← 화면 내 슬롯(0~MAX_PAGES-1)
+ *
+ * transform 은 visualSlot 기준으로 계산되므로 actualPage가 커져도
+ * 항상 [0, MAX_PAGES-1] 범위의 슬롯을 가리킨다.
  * ============================================================ */
 function HomeStageMap({
   clearedLevel,
@@ -638,7 +650,10 @@ function HomeStageMap({
   season:        Season;
   onSelectLevel: (level: number) => void;
 }) {
-  const currentPage = Math.floor(Math.max(0, clearedLevel) / LEVELS_PER_PAGE);
+  const HALF        = Math.floor(MAX_PAGES / 2);                         // = 2
+  const actualPage  = Math.floor(Math.max(0, clearedLevel) / LEVELS_PER_PAGE);
+  const windowStart = Math.max(0, actualPage - HALF);                    // 윈도우 첫 페이지 (실제 페이지 번호)
+  const visualSlot  = Math.min(actualPage - windowStart, MAX_PAGES - 1); // 윈도우 내 현재 슬롯(0~4)
 
   return (
     <div
@@ -657,19 +672,22 @@ function HomeStageMap({
           left:       0,
           right:      0,
           height:     `${MAX_PAGES * 100}dvh`,
-          transform:  `translateY(-${(MAX_PAGES - 1 - currentPage) * 100}dvh)`,
+          transform:  `translateY(-${(MAX_PAGES - 1 - visualSlot) * 100}dvh)`,
           transition: "transform 0.65s cubic-bezier(0.22, 1, 0.36, 1)",
           willChange: "transform",
         }}
       >
-        {Array.from({ length: MAX_PAGES }, (_, pageIdx) => {
-          const pageStart = pageIdx * LEVELS_PER_PAGE + 1;
+        {Array.from({ length: MAX_PAGES }, (_, i) => {
+          /* i = 시각적 슬롯 인덱스(고정), pageActual = 실제 페이지 번호(윈도우에 따라 변동) */
+          const pageActual = windowStart + i;
+          const pageStart  = pageActual * LEVELS_PER_PAGE + 1;
+
           return (
             <div
-              key={pageIdx}
+              key={i}  /* 시각적 슬롯 키 고정 — 윈도우 이동 시 DOM 재활용 */
               style={{
                 position: "absolute",
-                top:      `${(MAX_PAGES - 1 - pageIdx) * 100}dvh`,
+                top:      `${(MAX_PAGES - 1 - i) * 100}dvh`,
                 left:     0,
                 right:    0,
                 height:   "100dvh",
