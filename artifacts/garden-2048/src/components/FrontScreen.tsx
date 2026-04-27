@@ -98,8 +98,8 @@ interface MenuItemDef {
 
 /* ── 계절별 메뉴 카드 색상 ────────────────────────────────── */
 const SEASON_MENU_PALETTE: Record<Season, { bg: string; text: string; shadow: string }> = {
-  // 봄: 벚꽃 핑크+연두 배경 → 따뜻한 로즈베이지
-  spring: { bg: "#F5E0D6", text: "#6B2E1A", shadow: "rgba(107,46,26,0.50)" },
+  // 봄: 벚꽃 핑크+연두 배경 → 따뜻한 아이보리 크림
+  spring: { bg: "#F7EED8", text: "#5A3210", shadow: "rgba(90,50,16,0.50)"  },
   // 여름: 선명한 초록+하늘+해바라기 배경 → 따뜻한 선샤인 크림
   summer: { bg: "#FFF8CA", text: "#5A3C00", shadow: "rgba(90,60,0,0.55)"   },
   // 가을: 짙은 주황/황금 단풍 배경 → 부드러운 황금 크림 (배경보다 밝고 채도 낮게)
@@ -112,8 +112,8 @@ const SEASON_MENU_PALETTE: Record<Season, { bg: string; text: string; shadow: st
  *  원본 SVG 황금/앰버(hue≈38°) 기준 계절 보정
  */
 const SEASON_START_FILTER: Record<Season, string> = {
-  // 봄: 살짝 로즈-골드 톤
-  spring: "hue-rotate(-12deg) saturate(1.15) brightness(1.02)",
+  // 봄: 원본 골드 거의 그대로
+  spring: "saturate(1.05) brightness(1.03)",
   // 여름: 밝고 따뜻한 골드 유지
   summer: "saturate(1.15) brightness(1.06)",
   // 가을: 더 진한 주황-빨강
