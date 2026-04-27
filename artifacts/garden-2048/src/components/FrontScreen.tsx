@@ -98,29 +98,36 @@ interface MenuItemDef {
 
 /* ── 계절별 메뉴 카드 색상 ────────────────────────────────── */
 const SEASON_MENU_PALETTE: Record<Season, { bg: string; text: string; shadow: string }> = {
-  spring: { bg: "#F7EED8", text: "#5A3210", shadow: "rgba(90,50,16,0.50)"  },
-  summer: { bg: "#C5E4F5", text: "#0E3A58", shadow: "rgba(14,58,88,0.55)"  },
-  autumn: { bg: "#F5C898", text: "#6B1C00", shadow: "rgba(130,35,0,0.60)"  },
-  winter: { bg: "#BDD5EF", text: "#122E62", shadow: "rgba(18,46,98,0.60)"  },
+  // 봄: 벚꽃 핑크+연두 배경 → 따뜻한 로즈베이지
+  spring: { bg: "#F5E0D6", text: "#6B2E1A", shadow: "rgba(107,46,26,0.50)" },
+  // 여름: 선명한 초록+하늘+해바라기 배경 → 따뜻한 선샤인 크림
+  summer: { bg: "#FFF8CA", text: "#5A3C00", shadow: "rgba(90,60,0,0.55)"   },
+  // 가을: 짙은 주황/황금 단풍 배경 → 부드러운 황금 크림 (배경보다 밝고 채도 낮게)
+  autumn: { bg: "#F5E0A8", text: "#5A2800", shadow: "rgba(90,40,0,0.55)"   },
+  // 겨울: 흰눈+연한 파랑 배경 → 아이시 화이트 (배경보다 밝고 따뜻)
+  winter: { bg: "#EDF4FB", text: "#1A3858", shadow: "rgba(26,56,88,0.45)"  },
 };
 
 /* ── 계절별 START 버튼 CSS filter
- *  원본 SVG는 황금/앰버 색상(hue≈38°)
- *  spring: 초록(+80°) / summer: 원본 유지 / autumn: 주황-빨강(-22°) / winter: 파랑(+175°)
+ *  원본 SVG 황금/앰버(hue≈38°) 기준 계절 보정
  */
 const SEASON_START_FILTER: Record<Season, string> = {
-  spring: "saturate(1.05) brightness(1.03)",
-  summer: "saturate(1.1) brightness(1.05)",
-  autumn: "hue-rotate(-22deg) saturate(1.4) brightness(0.97)",
-  winter: "hue-rotate(175deg) saturate(0.85) brightness(1.08)",
+  // 봄: 살짝 로즈-골드 톤
+  spring: "hue-rotate(-12deg) saturate(1.15) brightness(1.02)",
+  // 여름: 밝고 따뜻한 골드 유지
+  summer: "saturate(1.15) brightness(1.06)",
+  // 가을: 더 진한 주황-빨강
+  autumn: "hue-rotate(-25deg) saturate(1.40) brightness(0.95)",
+  // 겨울: 쿨 블루
+  winter: "hue-rotate(175deg) saturate(0.80) brightness(1.10)",
 };
 
 /* ── 계절별 타이틀 CSS filter ───────────────────────────── */
 const SEASON_TITLE_FILTER: Record<Season, string> = {
-  spring: "none",
-  summer: "sepia(0.25) saturate(1.4) hue-rotate(12deg)",
-  autumn: "sepia(0.35) saturate(1.5) hue-rotate(-18deg)",
-  winter: "saturate(0.55) hue-rotate(195deg) brightness(1.08)",
+  spring: "none",                                                         // 원본 유지
+  summer: "saturate(1.2) brightness(1.05)",                              // 따뜻한 골드 강조
+  autumn: "sepia(0.30) saturate(1.5) hue-rotate(-15deg)",               // 주황-갈색
+  winter: "saturate(0.50) hue-rotate(195deg) brightness(1.10)",         // 쿨 블루
 };
 
 type NodeStatus = "done" | "current" | "available" | "locked";
