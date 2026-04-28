@@ -324,13 +324,12 @@ export function FrontScreen({
         }}
       />
 
+      {/* ── 상단 HUD 바 (TopHudBar) — bg 렌더 불필요, 항상 표시 ── */}
+      <TopHudBar player={player} season={season} />
+
       {/* ── 좌표 기반 UI (배경 렌더 영역 기준) ───────────────── */}
       {ready && (
         <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 1 }}>
-
-          {/* ── 상단 생명력 / 코인 표시 ─────────────────────── */}
-          <LivesDisplay lives={player.lives} bg={bg} season={season} />
-          <TopCoinDisplay coins={player.coins} bg={bg} season={season} />
 
           {/* ── 타이틀 ──────────────────────────────────────── */}
           <HomeTitle bg={bg} season={season} />
@@ -475,82 +474,143 @@ function HomeTitle({ bg, season }: { bg: BgLayout; season: Season }) {
 }
 
 /* ============================================================
- * LivesDisplay — 홈 상단 생명력 표시 (design coords 300, 100)
+ * TopHudBar — 홈 전체폭 상단 HUD (Gardenscapes / Royal Match 스타일)
+ *
+ * ┌─────────────────────────────────────────────────────────┐
+ * │  ❤️ ❤️ ❤️ ❤️ ❤️  (+N)          🪙  12,345           │
+ * └─────────────────────────────────────────────────────────┘
+ *
+ * - position: absolute top-0, full-width (CSS 기준 — bg 좌표 불필요)
+ * - 계절 팔레트 그라디언트 + frosted-glass backdrop-blur
+ * - 하단 3px 선 + 그림자로 게임 영역과 명확히 구분
+ * - safe-area-inset-top 지원 (아이폰 노치/다이나믹 아일랜드)
  * ============================================================ */
-function LivesDisplay({ lives, bg, season }: { lives: number; bg: BgLayout; season: Season }) {
-  const { rx, ry, scaleX } = toRenderPoint(300, 100, bg);
-  const fontSize  = Math.max(13, 15 * scaleX);
+function TopHudBar({ player, season }: { player: PlayerData; season: Season }) {
   const palette   = SEASON_MENU_PALETTE[season];
+  const lives     = player.lives;
   const MAX_SLOTS = 5;
   const filled    = Math.min(lives, MAX_SLOTS);
   const bonus     = Math.max(0, lives - MAX_SLOTS);
 
-  return (
-    <div
-      style={{
-        position:      "absolute",
-        left:          rx,
-        top:           ry,
-        transform:     "translateX(-50%)",
-        zIndex:        20,
-        pointerEvents: "none",
-        display:       "flex",
-        alignItems:    "center",
-        gap:           3 * scaleX,
-        background:    palette.bg + "dd",
-        border:        `1px solid ${palette.text}40`,
-        borderRadius:  9999,
-        padding:       `${4 * scaleX}px ${10 * scaleX}px`,
-        boxShadow:     `0 2px 8px ${palette.shadow}`,
-        backdropFilter:"blur(4px)",
-      }}
-    >
-      {Array.from({ length: MAX_SLOTS }, (_, i) => (
-        <span key={i} style={{ fontSize: fontSize + 2, lineHeight: 1, opacity: i < filled ? 1 : 0.25 }}>
-          ❤️
-        </span>
-      ))}
-      {bonus > 0 && (
-        <span style={{ fontSize, fontWeight: 800, color: palette.text, lineHeight: 1, marginLeft: 2 * scaleX }}>
-          +{bonus}
-        </span>
-      )}
-    </div>
-  );
-}
-
-/* ============================================================
- * TopCoinDisplay — 홈 상단 코인 표시 (design coords 820, 100)
- * ============================================================ */
-function TopCoinDisplay({ coins, bg, season }: { coins: number; bg: BgLayout; season: Season }) {
-  const { rx, ry, scaleX } = toRenderPoint(820, 100, bg);
-  const fontSize = Math.max(13, 15 * scaleX);
-  const palette  = SEASON_MENU_PALETTE[season];
+  /* ── 계절별 그라디언트 색상 ── */
+  const barGradient: Record<Season, string> = {
+    spring: "linear-gradient(180deg, #FFF5E4F5 0%, #FDF0D8E8 100%)",
+    summer: "linear-gradient(180deg, #FFFDE7F5 0%, #FFF9C4E8 100%)",
+    autumn: "linear-gradient(180deg, #FFF3E0F5 0%, #FFE0B2E8 100%)",
+    winter: "linear-gradient(180deg, #E3F2FDF5 0%, #BBDEFBE8 100%)",
+  };
+  const borderColor: Record<Season, string> = {
+    spring: "#D4AC6080",
+    summer: "#F9A82580",
+    autumn: "#E65100AA",
+    winter: "#1565C066",
+  };
+  const shadowColor: Record<Season, string> = {
+    spring: "rgba(180,130,60,0.18)",
+    summer: "rgba(200,150,0,0.20)",
+    autumn: "rgba(180,80,0,0.22)",
+    winter: "rgba(20,80,160,0.16)",
+  };
 
   return (
     <div
       style={{
-        position:      "absolute",
-        left:          rx,
-        top:           ry,
-        transform:     "translateX(-50%)",
-        zIndex:        20,
-        pointerEvents: "none",
-        display:       "flex",
-        alignItems:    "center",
-        gap:           6 * scaleX,
-        background:    palette.bg + "dd",
-        border:        `1px solid ${palette.text}40`,
-        borderRadius:  9999,
-        padding:       `${4 * scaleX}px ${10 * scaleX}px`,
-        boxShadow:     `0 2px 8px ${palette.shadow}`,
-        backdropFilter:"blur(4px)",
+        position:            "absolute",
+        top:                 0,
+        left:                0,
+        right:               0,
+        zIndex:              30,
+        pointerEvents:       "none",
+        /* safe-area — iPhone 노치/다이나믹 아일랜드 */
+        paddingTop:          "env(safe-area-inset-top, 0px)",
+        background:          barGradient[season],
+        backdropFilter:      "blur(14px)",
+        WebkitBackdropFilter:"blur(14px)",
+        borderBottom:        `2.5px solid ${borderColor[season]}`,
+        boxShadow:           `0 4px 20px ${shadowColor[season]}`,
+        transition:          "background 0.6s ease, border-color 0.6s ease",
       }}
     >
-      <span style={{ fontSize: fontSize + 2, lineHeight: 1 }}>🪙</span>
-      <span style={{ fontSize, fontWeight: 800, color: palette.text, lineHeight: 1 }}>
-        {coins.toLocaleString()}
-      </span>
+      {/* 내부 행: 좌(생명력) — 우(코인) */}
+      <div
+        style={{
+          display:         "flex",
+          alignItems:      "center",
+          justifyContent:  "space-between",
+          padding:         "9px 16px 9px",
+          gap:             8,
+        }}
+      >
+        {/* ── 생명력 필 ─────────────────────────────────────── */}
+        <div
+          style={{
+            display:       "flex",
+            alignItems:    "center",
+            gap:           3,
+            background:    palette.bg + "CC",
+            borderRadius:  9999,
+            padding:       "5px 12px 5px 10px",
+            border:        `1.5px solid ${palette.text}30`,
+            boxShadow:     "inset 0 1px 0 rgba(255,255,255,0.55), 0 1px 4px rgba(0,0,0,0.08)",
+          }}
+        >
+          {/* 하트 슬롯 5칸 */}
+          <div style={{ display: "flex", gap: 2 }}>
+            {Array.from({ length: MAX_SLOTS }, (_, i) => (
+              <span
+                key={i}
+                style={{
+                  fontSize:   "clamp(15px, 4.5vw, 20px)",
+                  lineHeight: 1,
+                  opacity:    i < filled ? 1 : 0.22,
+                  filter:     i < filled ? "drop-shadow(0 1px 2px rgba(220,50,50,0.35))" : "none",
+                  transition: "opacity 0.3s",
+                }}
+              >❤️</span>
+            ))}
+          </div>
+          {/* 보너스: lives > 5 일 때만 */}
+          {bonus > 0 && (
+            <span
+              style={{
+                fontSize:    "clamp(12px, 3.5vw, 16px)",
+                fontWeight:  800,
+                color:       palette.text,
+                lineHeight:  1,
+                marginLeft:  4,
+                letterSpacing: "-0.3px",
+              }}
+            >+{bonus}</span>
+          )}
+        </div>
+
+        {/* ── 코인 필 ───────────────────────────────────────── */}
+        <div
+          style={{
+            display:       "flex",
+            alignItems:    "center",
+            gap:           6,
+            background:    palette.bg + "CC",
+            borderRadius:  9999,
+            padding:       "5px 14px 5px 10px",
+            border:        `1.5px solid ${palette.text}30`,
+            boxShadow:     "inset 0 1px 0 rgba(255,255,255,0.55), 0 1px 4px rgba(0,0,0,0.08)",
+          }}
+        >
+          <span style={{ fontSize: "clamp(15px, 4.5vw, 20px)", lineHeight: 1 }}>🪙</span>
+          <span
+            style={{
+              fontSize:      "clamp(13px, 3.8vw, 17px)",
+              fontWeight:    800,
+              color:         palette.text,
+              lineHeight:    1,
+              letterSpacing: "-0.4px",
+            }}
+          >
+            {player.coins.toLocaleString()}
+          </span>
+        </div>
+      </div>
     </div>
   );
 }
