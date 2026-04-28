@@ -12,7 +12,7 @@ import { loadPlayerData, savePlayerData } from "./playerData";
 
 /* ── 초기 생명력 지급 ──────────────────────────────────── */
 const LIVES_GIFT_KEY     = "plant2048_lives_init_v1";
-const INITIAL_LIVES      = 5;
+const INITIAL_LIVES      = 10;
 
 /**
  * 생명력이 0인 사용자(신규·기존 모두)에게 1회만 초기 생명력 5개를 지급한다.

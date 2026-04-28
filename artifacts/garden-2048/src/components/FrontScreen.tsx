@@ -572,21 +572,19 @@ function TopHudBar({ player, season }: { player: PlayerData; season: Season }) {
               }}
             >❤️</span>
           ))}
-          {/* +N 보너스: lives > 5 일 때만, pill 안에 이어서 표시 */}
-          {bonus > 0 && (
-            <span
-              style={{
-                fontSize:      "clamp(11px, 3.2vw, 15px)",
-                fontWeight:    900,
-                color:         palette.text,
-                lineHeight:    1,
-                marginLeft:    5,
-                letterSpacing: "-0.3px",
-                flexShrink:    0,
-                whiteSpace:    "nowrap",
-              }}
-            >+{bonus}</span>
-          )}
+          {/* 생명력 수 — 항상 pill 안에 표시 (lives > 5 이면 +N, 이하면 총 수) */}
+          <span
+            style={{
+              fontSize:      "clamp(11px, 3.2vw, 15px)",
+              fontWeight:    900,
+              color:         palette.text,
+              lineHeight:    1,
+              marginLeft:    5,
+              letterSpacing: "-0.3px",
+              flexShrink:    0,
+              whiteSpace:    "nowrap",
+            }}
+          >{bonus > 0 ? `+${bonus}` : lives}</span>
         </div>
 
         {/* ── 코인 필 ───────────────────────────────────────── */}
