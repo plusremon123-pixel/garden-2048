@@ -270,7 +270,7 @@ export default function App() {
             <button
               key={lv}
               onClick={() => {
-                localStorage.setItem(PLAYER_STORAGE_KEY, JSON.stringify({ coins: 9999, clearedLevel: lv }));
+                localStorage.setItem(PLAYER_STORAGE_KEY, JSON.stringify({ coins: 9999, clearedLevel: lv, lives: 10 }));
                 window.location.reload();
               }}
               style={{
@@ -293,7 +293,7 @@ export default function App() {
             <button
               key={lv}
               onClick={() => {
-                localStorage.setItem(PLAYER_STORAGE_KEY, JSON.stringify({ coins: 9999, clearedLevel: lv }));
+                localStorage.setItem(PLAYER_STORAGE_KEY, JSON.stringify({ coins: 9999, clearedLevel: lv, lives: 10 }));
                 window.location.reload();
               }}
               style={{
@@ -316,7 +316,7 @@ export default function App() {
             <button
               key={lv}
               onClick={() => {
-                localStorage.setItem(PLAYER_STORAGE_KEY, JSON.stringify({ coins: 9999, clearedLevel: lv }));
+                localStorage.setItem(PLAYER_STORAGE_KEY, JSON.stringify({ coins: 9999, clearedLevel: lv, lives: 10 }));
                 window.location.reload();
               }}
               style={{
