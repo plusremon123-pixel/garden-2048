@@ -1,0 +1,30 @@
+{
+  "name": "Garden 2048 Dev",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
+
+  "postCreateCommand": "npm install -g pnpm && pnpm install",
+  "postStartCommand": "pnpm --filter @workspace/garden-2048 dev",
+
+  "forwardPorts": [5175],
+  "portsAttributes": {
+    "5175": {
+      "label": "Vite Dev Server",
+      "onAutoForward": "openPreview"
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.vscode-typescript-next",
+        "bradlc.vscode-tailwindcss",
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "typescript.tsdk": "node_modules/typescript/lib"
+      }
+    }
+  }
+}
