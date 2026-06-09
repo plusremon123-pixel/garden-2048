@@ -40,12 +40,13 @@ export function GoldShopModal({ season, onEarnCoins, onClose }: GoldShopModalPro
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[310] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+      className="fixed inset-0 z-[310] flex items-center justify-center p-4 backdrop-blur-sm"
+      style={{ background: "rgba(76,46,12,0.34)" }}
       onClick={onClose}
     >
       <div
         className="w-full max-w-sm rounded-3xl p-6 shadow-2xl flex flex-col gap-4 animate-in zoom-in-95 duration-300"
-        style={{ background: theme.popupBg }}
+        style={{ background: theme.popupBg, border: `1px solid ${theme.borderColor}55` }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── 헤더 ─────────────────────────────────────────── */}

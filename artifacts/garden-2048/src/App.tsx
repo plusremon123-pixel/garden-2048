@@ -257,108 +257,188 @@ export default function App() {
 
       {/* ── DEV 전용: 레벨 이동 버튼 (프로덕션에서는 렌더링 안 됨) ── */}
       {import.meta.env.DEV && (
-        <div style={{
-          position: "fixed", bottom: 56, right: 8, zIndex: 9999,
-          display: "flex", flexDirection: "column", gap: 3,
-        }}>
-          {/* 카드 테스트 */}
-          {([
-            { label: "🌵 9",   lv: 8   },
-            { label: "🌻 99",  lv: 98  },
-            { label: "🍀 399", lv: 398 },
-          ] as const).map(({ label, lv }) => (
-            <button
-              key={lv}
-              onClick={() => {
-                localStorage.setItem(PLAYER_STORAGE_KEY, JSON.stringify({ coins: 9999, clearedLevel: lv, lives: 10 }));
-                window.location.reload();
-              }}
-              style={{
-                fontSize: 10, fontWeight: 700, padding: "3px 7px",
-                borderRadius: 8, border: "1.5px solid #94a3b8",
-                background: "#f1f5f9", color: "#475569", cursor: "pointer", lineHeight: 1.4,
-              }}
-            >{label}</button>
-          ))}
+        <DevToolsPanel onForceWin={() => devForceWinRef.current?.()} />
+      )}
+    </div>
+  );
+}
 
-          {/* 구분선 */}
-          <div style={{ height: 1, background: "#cbd5e1", margin: "2px 0" }} />
+function DevToolsPanel({ onForceWin }: { onForceWin: () => void }) {
+  const [open, setOpen] = useState(false);
 
-          {/* 1주기 계절 전환 테스트 (전환 직전 스테이지) */}
-          {([
-            { label: "🌸 260",  lv: 259 },
-            { label: "☀️ 500", lv: 499 },
-            { label: "🍂 760", lv: 759 },
-          ] as const).map(({ label, lv }) => (
-            <button
-              key={lv}
-              onClick={() => {
-                localStorage.setItem(PLAYER_STORAGE_KEY, JSON.stringify({ coins: 9999, clearedLevel: lv, lives: 10 }));
-                window.location.reload();
-              }}
-              style={{
-                fontSize: 10, fontWeight: 700, padding: "3px 7px",
-                borderRadius: 8, border: "1.5px solid #a7f3d0",
-                background: "#ecfdf5", color: "#065f46", cursor: "pointer", lineHeight: 1.4,
-              }}
-            >{label}</button>
-          ))}
+  const jumpToLevel = (clearedLevel: number) => {
+    localStorage.setItem(
+      PLAYER_STORAGE_KEY,
+      JSON.stringify({ coins: 9999, clearedLevel, lives: 10 }),
+    );
+    window.location.reload();
+  };
 
-          {/* 구분선 */}
-          <div style={{ height: 1, background: "#cbd5e1", margin: "2px 0" }} />
+  const resetProgress = () => {
+    localStorage.setItem(
+      PLAYER_STORAGE_KEY,
+      JSON.stringify({ coins: 9999, clearedLevel: 0, lives: 10 }),
+    );
+    localStorage.removeItem("plant2048_subscription");
+    localStorage.removeItem("plant2048_lives_init_v1");
+    window.location.reload();
+  };
 
-          {/* 2주기 계절 전환 테스트 (1001~2000) */}
-          {([
-            { label: "🌸 1260", lv: 1259 },
-            { label: "☀️ 1500", lv: 1499 },
-            { label: "🍂 1760", lv: 1759 },
-          ] as const).map(({ label, lv }) => (
-            <button
-              key={lv}
-              onClick={() => {
-                localStorage.setItem(PLAYER_STORAGE_KEY, JSON.stringify({ coins: 9999, clearedLevel: lv, lives: 10 }));
-                window.location.reload();
-              }}
-              style={{
-                fontSize: 10, fontWeight: 700, padding: "3px 7px",
-                borderRadius: 8, border: "1.5px solid #c4b5fd",
-                background: "#f5f3ff", color: "#5b21b6", cursor: "pointer", lineHeight: 1.4,
-              }}
-            >{label}</button>
-          ))}
+  const groups = [
+    {
+      title: "Cards",
+      tone: { border: "#94a3b8", bg: "#f1f5f9", color: "#475569" },
+      items: [
+        { label: "🌵 9", lv: 8 },
+        { label: "🌻 99", lv: 98 },
+        { label: "🍀 399", lv: 398 },
+      ],
+    },
+    {
+      title: "Season 1",
+      tone: { border: "#a7f3d0", bg: "#ecfdf5", color: "#065f46" },
+      items: [
+        { label: "🌸 260", lv: 259 },
+        { label: "☀️ 500", lv: 499 },
+        { label: "🍂 760", lv: 759 },
+      ],
+    },
+    {
+      title: "Season 2",
+      tone: { border: "#c4b5fd", bg: "#f5f3ff", color: "#5b21b6" },
+      items: [
+        { label: "🌸 1260", lv: 1259 },
+        { label: "☀️ 1500", lv: 1499 },
+        { label: "🍂 1760", lv: 1759 },
+      ],
+    },
+  ] as const;
 
-          {/* 구분선 */}
-          <div style={{ height: 1, background: "#cbd5e1", margin: "2px 0" }} />
+  const panelButtonStyle = (tone: { border: string; bg: string; color: string }) => ({
+    fontSize: 11,
+    fontWeight: 800,
+    padding: "5px 8px",
+    borderRadius: 9,
+    border: `1.5px solid ${tone.border}`,
+    background: tone.bg,
+    color: tone.color,
+    cursor: "pointer",
+    lineHeight: 1.25,
+  });
 
-          {/* 리셋 */}
-          <button
-            onClick={() => {
-              localStorage.setItem(PLAYER_STORAGE_KEY, JSON.stringify({ coins: 9999, clearedLevel: 0, lives: 10 }));
-              localStorage.removeItem("plant2048_subscription");
-              localStorage.removeItem("plant2048_lives_init_v1");
-              window.location.reload();
-            }}
+  return (
+    <div
+      style={{
+        position: "fixed",
+        right: 8,
+        bottom: 52,
+        zIndex: 9999,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "flex-end",
+        gap: 6,
+        pointerEvents: "none",
+      }}
+    >
+      {open && (
+        <div
+          style={{
+            width: 164,
+            maxHeight: "min(62dvh, 420px)",
+            overflowY: "auto",
+            borderRadius: 14,
+            padding: 8,
+            background: "rgba(255,255,255,0.94)",
+            border: "1px solid rgba(15,23,42,0.16)",
+            boxShadow: "0 12px 28px rgba(15,23,42,0.20)",
+            backdropFilter: "blur(8px)",
+            pointerEvents: "auto",
+          }}
+        >
+          <div
             style={{
-              fontSize: 10, fontWeight: 700, padding: "3px 7px",
-              borderRadius: 8, border: "1.5px solid #fca5a5",
-              background: "#fef2f2", color: "#dc2626", cursor: "pointer", lineHeight: 1.4,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: 6,
             }}
-          >Reset</button>
+          >
+            <span style={{ fontSize: 11, fontWeight: 900, color: "#334155" }}>QA Tools</span>
+            <button
+              onClick={() => setOpen(false)}
+              aria-label="Close QA tools"
+              style={{
+                width: 24,
+                height: 24,
+                borderRadius: 999,
+                border: "none",
+                background: "#e2e8f0",
+                color: "#475569",
+                cursor: "pointer",
+                fontWeight: 900,
+              }}
+            >
+              ×
+            </button>
+          </div>
 
-          {/* 구분선 */}
-          <div style={{ height: 1, background: "#cbd5e1", margin: "2px 0" }} />
+          {groups.map((group) => (
+            <div key={group.title} style={{ marginTop: 6 }}>
+              <div style={{ fontSize: 9, fontWeight: 800, color: "#94a3b8", margin: "0 0 3px 2px" }}>
+                {group.title}
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 3 }}>
+                {group.items.map(({ label, lv }) => (
+                  <button
+                    key={lv}
+                    onClick={() => jumpToLevel(lv)}
+                    style={panelButtonStyle(group.tone)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
 
-          {/* 플레이 자동 완료 (현재 게임 화면에서만 동작) */}
-          <button
-            onClick={() => devForceWinRef.current?.()}
-            style={{
-              fontSize: 10, fontWeight: 700, padding: "3px 7px",
-              borderRadius: 8, border: "1.5px solid #86efac",
-              background: "#f0fdf4", color: "#16a34a", cursor: "pointer", lineHeight: 1.4,
-            }}
-          >✅ Complete</button>
+          <div style={{ height: 1, background: "#e2e8f0", margin: "8px 0" }} />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
+            <button
+              onClick={resetProgress}
+              style={panelButtonStyle({ border: "#fca5a5", bg: "#fef2f2", color: "#dc2626" })}
+            >
+              Reset
+            </button>
+            <button
+              onClick={onForceWin}
+              style={panelButtonStyle({ border: "#86efac", bg: "#f0fdf4", color: "#16a34a" })}
+            >
+              Complete
+            </button>
+          </div>
         </div>
       )}
+
+      <button
+        onClick={() => setOpen((value) => !value)}
+        aria-expanded={open}
+        aria-label="Toggle QA tools"
+        style={{
+          minWidth: 44,
+          height: 34,
+          borderRadius: 999,
+          border: "1px solid rgba(15,23,42,0.18)",
+          background: open ? "#0f172a" : "rgba(255,255,255,0.92)",
+          color: open ? "#f8fafc" : "#334155",
+          boxShadow: "0 6px 16px rgba(15,23,42,0.18)",
+          fontSize: 12,
+          fontWeight: 900,
+          cursor: "pointer",
+          pointerEvents: "auto",
+        }}
+      >
+        QA
+      </button>
     </div>
   );
 }

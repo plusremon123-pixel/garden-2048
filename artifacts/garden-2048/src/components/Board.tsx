@@ -146,7 +146,7 @@ export function Board({
         {/* 타일 선택 모드 안내 */}
         {selectMode && (
           <div className="absolute inset-0 z-20 flex items-start justify-center pt-3 pointer-events-none">
-            <div className="bg-black/65 text-white text-xs font-bold px-4 py-1.5 rounded-full animate-pulse">
+            <div className="text-xs font-bold px-4 py-1.5 rounded-full animate-pulse" style={{ background: "rgba(255,248,232,0.94)", color: "#4C2E0C", border: "1px solid rgba(210,156,76,0.38)", boxShadow: "0 8px 18px rgba(96,58,18,0.14)" }}>
               {t("game.selectTileToRemove")}
             </div>
           </div>
@@ -155,7 +155,7 @@ export function Board({
         {/* 빈 칸 선택 모드 안내 */}
         {emptyCellSelectMode && (
           <div className="absolute inset-0 z-20 flex items-start justify-center pt-3 pointer-events-none">
-            <div className="bg-black/65 text-white text-xs font-bold px-4 py-1.5 rounded-full animate-pulse">
+            <div className="text-xs font-bold px-4 py-1.5 rounded-full animate-pulse" style={{ background: "rgba(255,248,232,0.94)", color: "#4C2E0C", border: "1px solid rgba(210,156,76,0.38)", boxShadow: "0 8px 18px rgba(96,58,18,0.14)" }}>
               {t("game.selectEmptyCell")}
             </div>
           </div>

@@ -43,11 +43,11 @@ export function EndlessRewardModal({
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="w-full max-w-[360px] mx-4 bg-white rounded-3xl shadow-2xl overflow-hidden animate-modal-slide-up">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center backdrop-blur-sm" style={{ background: "rgba(76,46,12,0.34)" }}>
+      <div className="w-full max-w-[360px] mx-4 rounded-3xl shadow-2xl overflow-hidden animate-modal-slide-up" style={{ background: "#FFF8EA" }}>
 
         {/* 헤더 */}
-        <div className="bg-gradient-to-br from-amber-400 to-yellow-500 px-5 pt-6 pb-4 text-center">
+        <div className="px-5 pt-6 pb-4 text-center" style={{ background: "linear-gradient(180deg, #FFB13B 0%, #F59E0B 100%)" }}>
           <div className="text-4xl mb-2">
             {phase === 3 ? "🏆" : phase === 2 ? "🎖️" : "🎉"}
           </div>
@@ -62,10 +62,10 @@ export function EndlessRewardModal({
         <div className="px-5 py-4 flex flex-col gap-3">
 
           {/* 골드 보상 */}
-          <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3">
+          <div className="flex items-center gap-3 rounded-2xl px-4 py-3" style={{ background: "rgba(255,244,216,0.92)", border: "1px solid rgba(210,156,76,0.38)" }}>
             <span className="text-2xl">🪙</span>
             <div className="flex-1">
-              <p className="text-xs text-foreground/50">{t("endless.goldReward")}</p>
+              <p className="text-xs" style={{ color: "#9A7048" }}>{t("endless.goldReward")}</p>
               <p className="text-base font-black text-amber-600">+{gold.toLocaleString()}</p>
             </div>
             {isFinalPhase && (
@@ -75,9 +75,9 @@ export function EndlessRewardModal({
 
           {/* 3단계: 광고로 아이템 획득 */}
           {isFinalPhase && (
-            <div className="bg-primary/5 border border-primary/15 rounded-2xl px-4 py-3">
-              <p className="text-xs text-foreground/50 mb-1">{t("endless.adItemHint")}</p>
-              <p className="text-sm font-bold text-foreground">{t("endless.randomItem")}</p>
+            <div className="rounded-2xl px-4 py-3" style={{ background: "rgba(230,246,216,0.80)", border: "1px solid rgba(95,174,69,0.28)" }}>
+              <p className="text-xs mb-1" style={{ color: "#6F8A54" }}>{t("endless.adItemHint")}</p>
+              <p className="text-sm font-bold" style={{ color: "#4C2E0C" }}>{t("endless.randomItem")}</p>
             </div>
           )}
 
@@ -87,14 +87,16 @@ export function EndlessRewardModal({
               <button
                 onClick={handleWatchAd}
                 disabled={adState === "watching"}
-                className="flex-1 py-3 rounded-2xl bg-foreground/6 border border-foreground/10 text-sm font-bold text-foreground/55 active:scale-95 transition-all disabled:opacity-50"
+                className="flex-1 py-3 rounded-2xl text-sm font-bold active:scale-95 transition-all disabled:opacity-50"
+                style={{ background: "rgba(255,255,255,0.62)", border: "1px solid rgba(210,156,76,0.38)", color: "#74502A" }}
               >
                 {adState === "watching" ? t("endless.watching") : t("endless.watchAdItem")}
               </button>
             )}
             <button
               onClick={() => onClaim(gold)}
-              className="flex-1 py-3 rounded-2xl bg-primary text-white text-sm font-bold shadow-sm active:scale-95 transition-all"
+              className="flex-1 py-3 rounded-2xl text-white text-sm font-bold shadow-sm active:scale-95 transition-all"
+              style={{ background: "linear-gradient(180deg, #FFB13B 0%, #F59E0B 100%)" }}
             >
               {t("endless.claimGold")}
             </button>

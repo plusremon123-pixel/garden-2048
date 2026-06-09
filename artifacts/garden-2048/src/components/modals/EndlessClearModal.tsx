@@ -24,8 +24,8 @@ export function EndlessClearModal({ onClaim }: EndlessClearModalProps) {
   const { t } = useTranslation();
 
   return createPortal(
-    <div className="fixed inset-0 z-[250] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="w-full max-w-[380px] bg-white rounded-3xl shadow-2xl overflow-hidden animate-modal-slide-up">
+    <div className="fixed inset-0 z-[250] flex items-center justify-center backdrop-blur-sm p-4" style={{ background: "rgba(76,46,12,0.34)" }}>
+      <div className="w-full max-w-[380px] rounded-3xl shadow-2xl overflow-hidden animate-modal-slide-up" style={{ background: "#FFF8EA" }}>
 
         {/* ── 헤더 ─────────────────────────────────── */}
         <div className="bg-gradient-to-br from-amber-400 via-orange-400 to-rose-500 px-5 pt-6 pb-5 text-center relative">
@@ -56,7 +56,8 @@ export function EndlessClearModal({ onClaim }: EndlessClearModalProps) {
               return (
                 <div
                   key={gift.id}
-                  className="flex flex-col items-center justify-center bg-gradient-to-b from-amber-50 to-amber-100 border-2 border-amber-300 rounded-2xl px-2 py-3 shadow-sm"
+                  className="flex flex-col items-center justify-center rounded-2xl px-2 py-3 shadow-sm"
+                  style={{ background: "linear-gradient(180deg, #FFF7DF 0%, #FFE7AD 100%)", border: "2px solid #E7BA69" }}
                 >
                   <span className="text-3xl mb-1 leading-none">
                     {def?.emoji ?? "🎁"}

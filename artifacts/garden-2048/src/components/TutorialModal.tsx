@@ -7,17 +7,21 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "@/i18n";
+import { SEASON_BG } from "@/utils/seasonData";
 
 interface TutorialModalProps { onDone: () => void; }
 
 const TUTORIAL_KEY = "plant2048_tutorial_done";
 
 /* ── 색상 팔레트 ──────────────────────────────────────────── */
-const BG    = "#FFFBF2";
 const AMBER = "#F59E0B";
 const BROWN = "#78350F";
 const TXT   = "#3D2000";
 const MUTED = "#9C7A52";
+const GLASS = "rgba(255,255,255,0.72)";
+const TUTORIAL_BG = SEASON_BG.spring;
+const GARDEN_BED_IMAGE = "/tutorial/garden-bed.png";
+const GARDEN_BLOOM_IMAGE = "/tutorial/garden-bloom.png";
 
 /* ============================================================
  * 일러스트 컴포넌트들
@@ -61,6 +65,54 @@ function EmptyCell({ size = 56 }: { size?: number }) {
       background: "rgba(212,167,106,0.2)",
       flexShrink: 0,
     }} />
+  );
+}
+
+function GardenBedVisual({ finale = false }: { finale?: boolean }) {
+  const image = finale ? GARDEN_BLOOM_IMAGE : GARDEN_BED_IMAGE;
+
+  return (
+    <figure
+      style={{
+        position: "relative",
+        width: finale ? "min(88vw, 360px)" : "min(68vw, 295px)",
+        margin: 0,
+        animation: "tutPlantBreathe 3.4s ease-in-out infinite",
+      }}
+    >
+      <img
+        src={image}
+        alt=""
+        draggable={false}
+        style={{
+          display: "block",
+          width: "100%",
+          height: "auto",
+          filter: finale
+            ? "drop-shadow(0 18px 18px rgba(80,45,16,0.22)) saturate(1.07) brightness(1.02)"
+            : "drop-shadow(0 16px 16px rgba(80,45,16,0.20)) saturate(1.04)",
+          userSelect: "none",
+        }}
+      />
+      {[0, 1, 2, 3].map((i) => (
+        <span
+          key={i}
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            left: ["18%", "74%", "44%", "82%"][i],
+            top: ["42%", "48%", "31%", "62%"][i],
+            width: [6, 5, 5, 4][i],
+            height: [6, 5, 5, 4][i],
+            borderRadius: "50%",
+            background: ["#f8a9bd", "#f4c36a", "#a9d8a2", "#f7b0ca"][i],
+            boxShadow: "0 0 10px rgba(255,255,255,0.85)",
+            opacity: 0.72,
+            animation: `tutPollenFloat ${3.6 + i * 0.4}s ease-in-out ${i * 0.22}s infinite`,
+          }}
+        />
+      ))}
+    </figure>
   );
 }
 
@@ -293,19 +345,7 @@ const STEPS: Step[] = [
     titleEn: "Welcome to Garden 2048!",
     descKo: "타일을 합쳐 아름다운 정원을\n키워나가는 퍼즐 게임이에요.",
     descEn: "Grow a beautiful garden by\nmerging tiles in this puzzle game.",
-    visual: () => (
-      <div style={{ textAlign: "center", lineHeight: 1 }}>
-        <div style={{ fontSize: 90, userSelect: "none", animation: "tutFloat 2.5s ease-in-out infinite" }}>🌸</div>
-        <div style={{ display: "flex", justifyContent: "center", gap: 16, marginTop: 12 }}>
-          {["🌷","🌻","🌹","🌼"].map((e, i) => (
-            <span key={i} style={{
-              fontSize: 28,
-              animation: `tutFloat 2.5s ease-in-out ${i * 0.3}s infinite`,
-            }}>{e}</span>
-          ))}
-        </div>
-      </div>
-    ),
+    visual: () => <GardenBedVisual />,
   },
   {
     bgGradient:  "linear-gradient(160deg,#EFF6FF 0%,#DBEAFE 100%)",
@@ -375,16 +415,7 @@ const STEPS: Step[] = [
     titleEn: "Ready to grow your garden!",
     descKo: "타일을 합치고, 카드를 쓰고,\n아름다운 정원을 완성해보세요!",
     descEn: "Merge tiles, use cards,\nand build your beautiful garden!",
-    visual: () => (
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-        <div style={{ fontSize: 72, animation: "tutFloat 2s ease-in-out infinite" }}>🏡</div>
-        <div style={{ display: "flex", gap: 8 }}>
-          {["🌷","🌻","🌿","🌸","🌹"].map((e, i) => (
-            <span key={i} style={{ fontSize: 24, animation: `tutFloat 2s ease-in-out ${i * 0.2}s infinite` }}>{e}</span>
-          ))}
-        </div>
-      </div>
-    ),
+    visual: () => <GardenBedVisual finale />,
   },
 ];
 
@@ -443,131 +474,252 @@ export function TutorialModal({ onDone }: TutorialModalProps) {
   };
 
   const slideAnim = dir === "next"
-    ? "tutSlideInRight 280ms cubic-bezier(0.22,1,0.36,1) both"
-    : "tutSlideInLeft  280ms cubic-bezier(0.22,1,0.36,1) both";
+    ? "tutSceneInRight 420ms cubic-bezier(0.22,1,0.36,1) both"
+    : "tutSceneInLeft 420ms cubic-bezier(0.22,1,0.36,1) both";
 
   return createPortal(
     <div
       style={{
         position: "fixed", inset: 0, zIndex: 400,
-        display: "flex", flexDirection: "column",
+        display: "grid",
+        gridTemplateRows: "auto minmax(0, 1fr) auto",
         background: current.bgGradient,
-        transition: "background 0.4s ease",
+        transition: "background 520ms ease",
         userSelect: "none",
+        overflow: "hidden",
       }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* ── 상단 바: 건너뛰기 + 진행 도트 ───────────────── */}
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "16px 20px 0",
-        flexShrink: 0,
-      }}>
-        {/* 도트 */}
-        <div style={{ display: "flex", gap: 6 }}>
+      <div
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          inset: 0,
+          backgroundImage: `linear-gradient(180deg, rgba(255,250,240,0.46), rgba(255,244,216,0.36)), url(${TUTORIAL_BG})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center top",
+          filter: "blur(5px) saturate(1.05)",
+          transform: "scale(1.04)",
+          opacity: 0.48,
+          pointerEvents: "none",
+        }}
+      />
+      <div
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          inset: 0,
+          background:
+            "radial-gradient(circle at 50% 18%, rgba(255,255,255,0.54), transparent 28%), radial-gradient(circle at 12% 78%, rgba(255,255,255,0.34), transparent 26%), linear-gradient(180deg, rgba(255,255,255,0.22), rgba(255,255,255,0.02) 46%, rgba(96,66,28,0.14))",
+          pointerEvents: "none",
+        }}
+      />
+
+      <div aria-hidden="true" style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
+        {[0, 1, 2, 3, 4, 5].map((i) => (
+          <span
+            key={i}
+            style={{
+              position: "absolute",
+              left: `${8 + i * 16}%`,
+              top: `${14 + (i % 3) * 22}%`,
+              fontSize: 14 + (i % 3) * 5,
+              opacity: 0.24,
+              animation: `tutDrift ${5.8 + i * 0.45}s ease-in-out ${i * 0.25}s infinite`,
+            }}
+          >
+            {["✦", "·", "✧", "✽", "✦", "☘"][i]}
+          </span>
+        ))}
+      </div>
+
+      {/* ── 상단 바: 진행 상태 + 건너뛰기 ───────────────── */}
+      <header
+        style={{
+          position: "relative",
+          zIndex: 2,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 14,
+          padding: "max(14px, env(safe-area-inset-top)) 18px 0",
+        }}
+      >
+        <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 7 }}>
           {STEPS.map((_, i) => (
-            <div key={i} style={{
-              height: 6,
-              width: i === step ? 22 : 6,
-              borderRadius: 999,
-              background: i === step ? current.accentColor : "rgba(0,0,0,0.15)",
-              transition: "all 280ms ease",
-            }} />
+            <div
+              key={i}
+              style={{
+                flex: i === step ? 2.5 : 1,
+                height: 7,
+                borderRadius: 999,
+                background: i <= step ? current.accentColor : "rgba(61,32,0,0.14)",
+                boxShadow: i === step ? `0 0 18px ${current.accentColor}66` : "none",
+                transition: "flex 320ms ease, background 320ms ease, box-shadow 320ms ease",
+              }}
+            />
           ))}
         </div>
-
-        {/* 건너뛰기 */}
         <button
           onClick={handleDone}
           style={{
-            background: "none", border: "none",
-            fontSize: 13, fontWeight: 700,
-            color: "rgba(0,0,0,0.35)", cursor: "pointer",
-            padding: "6px 4px",
+            height: 34,
+            padding: "0 13px",
+            borderRadius: 999,
+            border: "1px solid rgba(120,53,15,0.10)",
+            background: GLASS,
+            color: "rgba(61,32,0,0.48)",
+            boxShadow: "0 6px 18px rgba(120,53,15,0.08)",
+            backdropFilter: "blur(10px)",
+            cursor: "pointer",
+            fontSize: 13,
+            fontWeight: 800,
           }}
         >
           {lang === "ko" ? "건너뛰기" : "Skip"}
         </button>
-      </div>
+      </header>
 
       {/* ── 일러스트 영역 ────────────────────────────────── */}
-      <div
+      <main
         key={`visual-${animKey}`}
         style={{
-          flex: "1 1 0",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          padding: "16px 24px",
-          animation: slideAnim,
+          position: "relative",
+          zIndex: 1,
           minHeight: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "18px 24px 10px",
+          animation: slideAnim,
         }}
       >
-        {current.visual(lang)}
-      </div>
+        <div
+          style={{
+            position: "relative",
+            width: "min(78vw, 330px)",
+            aspectRatio: "1",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <div style={{ position: "relative", zIndex: 1, transform: "translateY(-2%)" }}>
+            {current.visual(lang)}
+          </div>
+        </div>
+      </main>
 
       {/* ── 하단 텍스트 + 버튼 카드 ─────────────────────── */}
-      <div
+      <section
         key={`text-${animKey}`}
         style={{
-          flexShrink: 0,
-          background: "#fff",
-          borderRadius: "28px 28px 0 0",
-          padding: "28px 28px 40px",
-          boxShadow: "0 -8px 32px rgba(0,0,0,0.08)",
+          position: "relative",
+          zIndex: 2,
+          margin: "0 14px calc(14px + env(safe-area-inset-bottom))",
+          borderRadius: 30,
+          padding: "18px 18px 16px",
+          background: "linear-gradient(180deg, rgba(255,255,255,0.84), rgba(255,255,255,0.70))",
+          border: "1px solid rgba(255,255,255,0.78)",
+          boxShadow: "0 18px 46px rgba(120,53,15,0.18)",
+          backdropFilter: "blur(14px)",
           animation: slideAnim,
         }}
       >
-        {/* 이모지 + 제목 */}
-        <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 10 }}>
-          <span style={{ fontSize: 34, lineHeight: 1, flexShrink: 0 }}>{current.emoji}</span>
-          <h2 style={{
-            fontFamily: "var(--font-display)",
-            fontSize: 20, fontWeight: 900,
-            color: TXT, lineHeight: 1.25, margin: 0,
-          }}>
-            {lang === "ko" ? current.titleKo : current.titleEn}
-          </h2>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
+          <span
+            style={{
+              width: 46,
+              height: 46,
+              borderRadius: 16,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+              background: `linear-gradient(145deg, #fff, ${current.accentColor}24)`,
+              border: `1.5px solid ${current.accentColor}33`,
+              boxShadow: `0 8px 18px ${current.accentColor}22`,
+              fontSize: 28,
+            }}
+          >
+            {current.emoji}
+          </span>
+          <div style={{ minWidth: 0 }}>
+            <p
+              style={{
+                margin: "0 0 3px",
+                fontSize: 11,
+                fontWeight: 900,
+                color: current.accentColor,
+                letterSpacing: 0,
+              }}
+            >
+              {step + 1} / {total}
+            </p>
+            <h2
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: 20,
+                fontWeight: 900,
+                color: TXT,
+                lineHeight: 1.18,
+                margin: 0,
+                letterSpacing: 0,
+              }}
+            >
+              {lang === "ko" ? current.titleKo : current.titleEn}
+            </h2>
+          </div>
         </div>
 
-        {/* 설명 */}
         <p style={{
-          fontSize: 14, color: MUTED,
-          lineHeight: 1.7, whiteSpace: "pre-line",
-          margin: "0 0 24px",
+          fontSize: 14,
+          color: MUTED,
+          lineHeight: 1.62,
+          whiteSpace: "pre-line",
+          margin: "0 0 16px",
         }}>
           {lang === "ko" ? current.descKo : current.descEn}
         </p>
 
-        {/* 버튼 */}
         <div style={{ display: "flex", gap: 10 }}>
-          {/* 이전 버튼 */}
           {step > 0 && (
             <button
               onClick={back}
               style={{
-                width: 48, height: 48, borderRadius: 999,
-                border: `2px solid ${current.accentColor}40`,
-                background: "none", cursor: "pointer",
-                fontSize: 20, display: "flex", alignItems: "center", justifyContent: "center",
-                color: current.accentColor, flexShrink: 0,
+                width: 52,
+                height: 52,
+                borderRadius: 18,
+                border: `1.5px solid ${current.accentColor}30`,
+                background: "rgba(255,255,255,0.58)",
+                cursor: "pointer",
+                fontSize: 20,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: current.accentColor,
+                flexShrink: 0,
+                boxShadow: "inset 0 -2px 0 rgba(120,53,15,0.08)",
               }}
             >←</button>
           )}
 
-          {/* 다음 / 시작 버튼 */}
           <button
             onClick={advance}
             style={{
-              flex: 1, height: 52, borderRadius: 999,
+              flex: 1,
+              height: 52,
+              borderRadius: 18,
               border: "none",
               background: isLast
-                ? `linear-gradient(135deg,#FCD34D,${current.accentColor})`
-                : `linear-gradient(135deg,${current.accentColor}CC,${current.accentColor})`,
+                ? `linear-gradient(135deg,#FCD34D 0%,${current.accentColor} 100%)`
+                : `linear-gradient(135deg,${current.accentColor}D9 0%,${current.accentColor} 100%)`,
               color: "#fff",
               fontFamily: "var(--font-display)",
               fontSize: 17, fontWeight: 900,
               cursor: "pointer",
-              boxShadow: `0 4px 16px ${current.accentColor}50`,
+              boxShadow: `0 10px 22px ${current.accentColor}44, inset 0 2px 0 rgba(255,255,255,0.28)`,
               display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
             }}
           >
@@ -577,33 +729,45 @@ export function TutorialModal({ onDone }: TutorialModalProps) {
             {!isLast && <span style={{ fontSize: 18 }}>→</span>}
           </button>
         </div>
-
-        {/* 단계 표시 */}
-        <p style={{
-          textAlign: "center", marginTop: 14,
-          fontSize: 11, color: "rgba(0,0,0,0.2)", fontWeight: 600,
-        }}>
-          {step + 1} / {total}
-        </p>
-      </div>
+      </section>
 
       {/* ── CSS 애니메이션 ───────────────────────────────── */}
       <style>{`
-        @keyframes tutSlideInRight {
-          from { opacity: 0; transform: translateX(40px); }
-          to   { opacity: 1; transform: translateX(0); }
+        @keyframes tutSceneInRight {
+          from { opacity: 0; transform: translateX(28px) scale(0.98); }
+          to   { opacity: 1; transform: translateX(0) scale(1); }
         }
-        @keyframes tutSlideInLeft {
-          from { opacity: 0; transform: translateX(-40px); }
-          to   { opacity: 1; transform: translateX(0); }
+        @keyframes tutSceneInLeft {
+          from { opacity: 0; transform: translateX(-28px) scale(0.98); }
+          to   { opacity: 1; transform: translateX(0) scale(1); }
+        }
+        @keyframes tutDrift {
+          0%,100% { transform: translateY(0) rotate(0deg); }
+          50%      { transform: translateY(-18px) rotate(8deg); }
+        }
+        @keyframes tutHaloPulse {
+          0%,100% { transform: scale(1); opacity: 0.92; }
+          50%      { transform: scale(1.035); opacity: 1; }
+        }
+        @keyframes tutPlantBreathe {
+          0%,100% { transform: translateY(0) scale(1); }
+          50%      { transform: translateY(-5px) scale(1.025); }
+        }
+        @keyframes tutPlantSway {
+          0%,100% { transform: translateY(0) rotate(-1deg); }
+          50%      { transform: translateY(-4px) rotate(1.5deg); }
+        }
+        @keyframes tutPollenFloat {
+          0%,100% { transform: translateY(0) scale(1); opacity: 0.45; }
+          50%      { transform: translateY(-14px) scale(1.18); opacity: 0.82; }
         }
         @keyframes tutFloat {
           0%,100% { transform: translateY(0); }
-          50%      { transform: translateY(-8px); }
+          50%      { transform: translateY(-10px); }
         }
         @keyframes tutPop {
           0%,100% { transform: scale(1); }
-          50%      { transform: scale(1.12); }
+          50%      { transform: scale(1.1); }
         }
         @keyframes tutCardPop {
           0%,100% { transform: scale(1) rotate(-2deg); }

@@ -49,8 +49,8 @@ export function Modal({
     type === "danger"  ? "bg-red-100"   : "bg-blue-100";
 
   return createPortal(
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl border border-board animate-in zoom-in-95 duration-200 text-center">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200" style={{ background: "rgba(76,46,12,0.30)" }}>
+      <div className="rounded-3xl p-8 max-w-sm w-full shadow-2xl border border-board animate-in zoom-in-95 duration-200 text-center" style={{ background: "#FFF8EA" }}>
 
         <div className={cn("w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-6 text-3xl", iconBg)}>
           {icon}

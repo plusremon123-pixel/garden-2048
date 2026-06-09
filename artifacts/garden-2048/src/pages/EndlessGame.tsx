@@ -23,24 +23,21 @@ import { loadInventory, saveInventory } from "@/utils/shopData";
 import { EndlessRewardModal }   from "@/components/modals/EndlessRewardModal";
 import { EndlessGameOverModal } from "@/components/modals/EndlessGameOverModal";
 import { EndlessClearModal }    from "@/components/modals/EndlessClearModal";
+import { SEASON_BG }            from "@/utils/seasonData";
 
-/* ── 별 파티클 (렌더링 시 한 번만 생성) ───────────────────── */
-const STARS = Array.from({ length: 28 }, (_, i) => ({
-  id:    i,
-  left:  `${(i * 37 + 11) % 100}%`,
-  top:   `${(i * 53 + 7)  % 85}%`,
-  size:  (i % 3 === 0) ? 3 : (i % 3 === 1) ? 2 : 1.5,
-  delay: `${(i * 0.41) % 3}s`,
-  dur:   `${2.2 + (i % 5) * 0.6}s`,
-}));
+const ENDLESS_BG = SEASON_BG.spring;
+const CREAM_PANEL = "linear-gradient(180deg, rgba(255,250,236,0.96), rgba(255,240,204,0.92))";
+const CREAM_BORDER = "rgba(210,156,76,0.38)";
+const GARDEN_TEXT = "#4C2E0C";
+const GARDEN_MUTED = "#9A7048";
 
 /* ── 난이도 팔레트 ─────────────────────────────────────────── */
 const DIFF_PALETTE: Record<EndlessDifficulty, {
   accent: string; glow: string; badge: string; emoji: string;
 }> = {
-  easy:   { accent: "#4ade80", glow: "rgba(74,222,128,0.55)",  badge: "#166534", emoji: "🌱" },
-  normal: { accent: "#facc15", glow: "rgba(250,204,21,0.55)",  badge: "#854d0e", emoji: "🌿" },
-  hard:   { accent: "#f87171", glow: "rgba(248,113,113,0.55)", badge: "#991b1b", emoji: "🌵" },
+  easy:   { accent: "#4F9A37", glow: "rgba(79,154,55,0.22)",   badge: "#E6F6D8", emoji: "🌱" },
+  normal: { accent: "#D97706", glow: "rgba(245,158,11,0.24)",  badge: "#FFF0B8", emoji: "🌻" },
+  hard:   { accent: "#B85B32", glow: "rgba(184,91,50,0.24)",   badge: "#FFE2D1", emoji: "🌵" },
 };
 
 /* ── 인벤토리 헬퍼 ─────────────────────────────────────────── */
@@ -237,25 +234,22 @@ export default function EndlessGame({
   return (
     <div
       className="relative min-h-[100dvh] w-full flex flex-col items-center overflow-hidden"
-      style={{ background: "linear-gradient(170deg, #0d1520 0%, #0d2010 45%, #0a1a1a 100%)" }}
+      style={{
+        backgroundColor: "#FFF8EA",
+        backgroundImage: `linear-gradient(180deg, rgba(255,250,236,0.30), rgba(255,248,234,0.74)), url("${ENDLESS_BG}")`,
+        backgroundSize: "cover",
+        backgroundPosition: "center top",
+      }}
     >
-      {/* ── 별 파티클 ────────────────────────────────────────── */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
-        {STARS.map((s) => (
-          <div key={s.id} style={{
-            position: "absolute", left: s.left, top: s.top,
-            width: s.size, height: s.size, borderRadius: "50%", background: "#fff",
-            animationName: "twinkle", animationDuration: s.dur, animationDelay: s.delay,
-            animationTimingFunction: "ease-in-out", animationIterationCount: "infinite",
-          }} />
-        ))}
-        <div style={{
-          position: "absolute", bottom: 0, left: 0, right: 0, height: "45%",
-          background: `radial-gradient(ellipse at 50% 100%, ${pal.glow} 0%, transparent 70%)`,
-        }} />
-      </div>
+      <div
+        className="absolute inset-0 pointer-events-none"
+        aria-hidden="true"
+        style={{
+          background: "linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,248,232,0.72) 68%, rgba(255,248,232,0.88) 100%)",
+        }}
+      />
 
-      <div className="relative z-10 w-full max-w-[500px] flex flex-col flex-1 px-4 pb-10">
+      <div className="relative z-10 w-full max-w-[500px] flex flex-col flex-1 px-4 pb-8">
 
         {/* ── 상단 HUD ─────────────────────────────────────────── */}
         <div className="flex items-center justify-between pt-2 pb-3 gap-2">
@@ -265,10 +259,11 @@ export default function EndlessGame({
             onClick={onEndlessHome}
             className="active:scale-95 transition-all"
             style={{
-              padding: "8px 14px", borderRadius: 12,
-              background: "rgba(255,255,255,0.08)",
-              border: "1px solid rgba(255,255,255,0.15)",
-              color: "rgba(255,255,255,0.7)",
+              width: 42, height: 42, borderRadius: 16,
+              background: CREAM_PANEL,
+              border: `1px solid ${CREAM_BORDER}`,
+              color: GARDEN_TEXT,
+              boxShadow: "0 8px 18px rgba(96,58,18,0.14)",
               fontSize: 18, lineHeight: 1,
             }}
             aria-label="무한게임 홈"
@@ -283,11 +278,11 @@ export default function EndlessGame({
               display: "flex", alignItems: "center", gap: 6,
               padding: "4px 14px", borderRadius: 99,
               background: pal.badge,
-              border: `1px solid ${pal.accent}60`,
-              boxShadow: `0 0 12px ${pal.glow}`,
+              border: `1px solid ${pal.accent}45`,
+              boxShadow: `0 8px 18px ${pal.glow}`,
             }}>
               <span style={{ fontSize: 14 }}>{pal.emoji}</span>
-              <span style={{ fontSize: 13, fontWeight: 900, color: pal.accent, letterSpacing: "0.04em" }}>
+              <span style={{ fontSize: 13, fontWeight: 900, color: pal.accent, letterSpacing: "0.02em" }}>
                 {diffLabel}
               </span>
             </div>
@@ -298,12 +293,12 @@ export default function EndlessGame({
               onAnimationEnd={() => setScoreBump(false)}
               style={{ textAlign: "center" }}
             >
-              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.45)", fontWeight: 700, letterSpacing: "0.08em", marginBottom: 2 }}>
+              <div style={{ fontSize: 11, color: GARDEN_MUTED, fontWeight: 800, letterSpacing: "0.06em", marginBottom: 2 }}>
                 SCORE
               </div>
               <div style={{
-                fontSize: 32, fontWeight: 900, color: "#ffffff", lineHeight: 1,
-                textShadow: `0 0 20px ${pal.glow}`,
+                fontSize: 32, fontWeight: 900, color: GARDEN_TEXT, lineHeight: 1,
+                textShadow: "0 2px 0 rgba(255,255,255,0.7)",
                 fontVariantNumeric: "tabular-nums",
               }}>
                 {score.toLocaleString()}
@@ -316,11 +311,12 @@ export default function EndlessGame({
             <button
               onClick={handleRestartPress}
               className="active:scale-95 transition-all"
-              style={{
-                padding: "8px 14px", borderRadius: 12,
-                background: "rgba(255,255,255,0.08)",
-                border: "1px solid rgba(255,255,255,0.15)",
-                color: "rgba(255,255,255,0.7)",
+            style={{
+                width: 42, height: 42, borderRadius: 16,
+                background: CREAM_PANEL,
+                border: `1px solid ${CREAM_BORDER}`,
+                color: GARDEN_TEXT,
+                boxShadow: "0 8px 18px rgba(96,58,18,0.14)",
                 fontSize: 18, lineHeight: 1,
               }}
               aria-label="새로고침"
@@ -328,12 +324,13 @@ export default function EndlessGame({
               ↺
             </button>
             <div style={{
-              padding: "6px 14px", borderRadius: 14,
-              background: "rgba(255,255,255,0.06)",
-              border: `1px solid ${pal.accent}40`,
+              padding: "6px 14px", borderRadius: 16,
+              background: CREAM_PANEL,
+              border: `1px solid ${CREAM_BORDER}`,
+              boxShadow: "0 8px 18px rgba(96,58,18,0.12)",
               textAlign: "center",
             }}>
-              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", fontWeight: 700, letterSpacing: "0.08em", marginBottom: 2 }}>
+              <div style={{ fontSize: 11, color: GARDEN_MUTED, fontWeight: 800, letterSpacing: "0.06em", marginBottom: 2 }}>
                 BEST
               </div>
               <div style={{ fontSize: 20, fontWeight: 900, color: pal.accent, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
@@ -356,11 +353,11 @@ export default function EndlessGame({
         {/* ── 게임 보드 ─────────────────────────────────────────── */}
         <main className="w-full flex-1 flex flex-col justify-center mt-3">
           <div style={{
-            borderRadius: 24, padding: 3,
-            background: `linear-gradient(135deg, ${pal.accent}60 0%, transparent 50%, ${pal.accent}30 100%)`,
-            boxShadow: `0 0 40px ${pal.glow}, inset 0 0 20px rgba(0,0,0,0.4)`,
+            borderRadius: 26, padding: 5,
+            background: "linear-gradient(145deg, #C98B4B 0%, #F3D49B 42%, #9B6330 100%)",
+            boxShadow: "0 18px 34px rgba(96,58,18,0.24), inset 0 2px 0 rgba(255,255,255,0.55)",
           }}>
-            <div style={{ borderRadius: 22, overflow: "hidden", background: "rgba(0,0,0,0.25)" }}>
+            <div style={{ borderRadius: 21, overflow: "hidden", background: "#B98045" }}>
               <Board
                 tiles={tilesList}
                 graveyard={graveyardList}
@@ -377,7 +374,7 @@ export default function EndlessGame({
       {showRestartConfirm && (
         <div
           className="absolute inset-0 z-40 flex items-center justify-center"
-          style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(6px)" }}
+          style={{ background: "rgba(76,46,12,0.34)", backdropFilter: "blur(8px)" }}
           onClick={() => setShowRestartConfirm(false)}
         >
           <div
@@ -385,25 +382,25 @@ export default function EndlessGame({
             style={{
               width: "calc(100% - 48px)", maxWidth: 300,
               borderRadius: 24,
-              background: "linear-gradient(160deg, #1a1030 0%, #100818 100%)",
-              border: "1.5px solid rgba(255,255,255,0.12)",
-              boxShadow: "0 8px 48px rgba(0,0,0,0.7)",
+              background: CREAM_PANEL,
+              border: `1.5px solid ${CREAM_BORDER}`,
+              boxShadow: "0 18px 48px rgba(96,58,18,0.22)",
               padding: "28px 24px 20px",
               display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
             }}
           >
             <div style={{ fontSize: 40 }}>↺</div>
-            <p style={{ fontSize: 18, fontWeight: 900, color: "#fff", textAlign: "center" }}>
+            <p style={{ fontSize: 18, fontWeight: 900, color: GARDEN_TEXT, textAlign: "center" }}>
               새로 시작할까요?
             </p>
-            <p style={{ fontSize: 13, color: "rgba(255,255,255,0.45)", textAlign: "center", lineHeight: 1.5, marginBottom: 4 }}>
+            <p style={{ fontSize: 13, color: GARDEN_MUTED, textAlign: "center", lineHeight: 1.5, marginBottom: 4 }}>
               현재 게임 기록이 사라져요
             </p>
             <button
               onClick={handleRestartConfirm}
               style={{
                 width: "100%", padding: "14px 0", borderRadius: 14,
-                background: "linear-gradient(135deg, #f87171 0%, #dc2626 100%)",
+                background: "linear-gradient(180deg, #FFB13B 0%, #F59E0B 100%)",
                 border: "none", color: "#fff",
                 fontSize: 16, fontWeight: 900, cursor: "pointer",
               }}
@@ -414,9 +411,9 @@ export default function EndlessGame({
               onClick={() => setShowRestartConfirm(false)}
               style={{
                 width: "100%", padding: "13px 0", borderRadius: 14,
-                background: "rgba(255,255,255,0.07)",
-                border: "1px solid rgba(255,255,255,0.12)",
-                color: "rgba(255,255,255,0.55)",
+                background: "rgba(255,255,255,0.52)",
+                border: `1px solid ${CREAM_BORDER}`,
+                color: GARDEN_MUTED,
                 fontSize: 15, fontWeight: 700, cursor: "pointer",
               }}
             >
@@ -430,23 +427,23 @@ export default function EndlessGame({
       {showAd && (
         <div
           className="absolute inset-0 z-50 flex flex-col items-center justify-center"
-          style={{ background: "rgba(0,0,0,0.92)" }}
+          style={{ background: "rgba(76,46,12,0.42)", backdropFilter: "blur(8px)" }}
         >
           <div style={{
             width: "calc(100% - 48px)", maxWidth: 320,
             borderRadius: 24,
-            background: "#1a1a2e",
-            border: "1.5px solid rgba(255,255,255,0.1)",
-            boxShadow: "0 8px 48px rgba(0,0,0,0.7)",
+            background: CREAM_PANEL,
+            border: `1.5px solid ${CREAM_BORDER}`,
+            boxShadow: "0 18px 48px rgba(96,58,18,0.22)",
             padding: "32px 24px 24px",
             display: "flex", flexDirection: "column", alignItems: "center", gap: 12,
           }}>
             <div style={{
               width: "100%", height: 180, borderRadius: 16,
-              background: "rgba(255,255,255,0.05)",
-              border: "1px solid rgba(255,255,255,0.08)",
+              background: "rgba(255,255,255,0.50)",
+              border: `1px dashed ${CREAM_BORDER}`,
               display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 13, color: "rgba(255,255,255,0.25)", fontWeight: 600,
+              fontSize: 13, color: GARDEN_MUTED, fontWeight: 600,
               letterSpacing: "0.1em",
             }}>
               AD
@@ -455,7 +452,7 @@ export default function EndlessGame({
               onClick={handleAdClose}
               style={{
                 width: "100%", padding: "14px 0", borderRadius: 14,
-                background: "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
+                background: "linear-gradient(180deg, #7BCB63 0%, #4F9A37 100%)",
                 border: "none", color: "#fff",
                 fontSize: 16, fontWeight: 900, cursor: "pointer",
               }}
@@ -511,28 +508,30 @@ interface MilestoneBarProps {
 
 function MilestoneBar({ config, claimedPhases, progressPct, currentPhaseIdx, accent, glow }: MilestoneBarProps) {
   const allCleared = currentPhaseIdx >= 3;
+  const icons = ["🌰", "🌱", "🌸"];
 
   return (
     <div style={{
-      padding: "10px 14px", borderRadius: 18,
-      background: "rgba(255,255,255,0.05)",
-      border: "1px solid rgba(255,255,255,0.08)",
+      padding: "11px 14px", borderRadius: 20,
+      background: CREAM_PANEL,
+      border: `1px solid ${CREAM_BORDER}`,
+      boxShadow: "0 10px 24px rgba(96,58,18,0.14)",
     }}>
       {/* 상단 라벨 */}
       <div className="flex items-center justify-between mb-2">
         <div>
-          <div style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.4)", letterSpacing: "0.08em", marginBottom: 1 }}>
+          <div style={{ fontSize: 10, fontWeight: 800, color: GARDEN_MUTED, letterSpacing: "0.06em", marginBottom: 1 }}>
             {allCleared ? "🏆 ALL CLEARED" : `PHASE ${currentPhaseIdx + 1}`}
           </div>
           {!allCleared && (
-            <div style={{ fontSize: 14, fontWeight: 900, color: "#ffffff", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
+            <div style={{ fontSize: 14, fontWeight: 900, color: GARDEN_TEXT, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
               {config.goals[currentPhaseIdx].toLocaleString()}
             </div>
           )}
         </div>
         {!allCleared && (
           <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.4)", letterSpacing: "0.08em", marginBottom: 1 }}>
+            <div style={{ fontSize: 10, fontWeight: 800, color: GARDEN_MUTED, letterSpacing: "0.06em", marginBottom: 1 }}>
               진행
             </div>
             <div style={{ fontSize: 14, fontWeight: 900, color: accent, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
@@ -546,15 +545,15 @@ function MilestoneBar({ config, claimedPhases, progressPct, currentPhaseIdx, acc
       <div className="relative">
         <div style={{
           height: 8, borderRadius: 99,
-          background: "rgba(255,255,255,0.08)",
+          background: "rgba(210,156,76,0.22)",
           overflow: "hidden", marginBottom: 8,
         }}>
           <div style={{
             height: "100%",
             width: allCleared ? "100%" : `${progressPct}%`,
             borderRadius: 99,
-            background: `linear-gradient(90deg, ${accent}80 0%, ${accent} 100%)`,
-            boxShadow: `0 0 10px ${glow}`,
+            background: `linear-gradient(90deg, #7BCB63 0%, ${accent} 100%)`,
+            boxShadow: `0 3px 10px ${glow}`,
             transition: "width 0.5s ease",
           }} />
         </div>
@@ -572,23 +571,21 @@ function MilestoneBar({ config, claimedPhases, progressPct, currentPhaseIdx, acc
                     width: claimed ? 28 : active ? 24 : 20,
                     height: claimed ? 28 : active ? 24 : 20,
                     borderRadius: "50%",
-                    background: claimed ? accent : active ? `${accent}30` : "rgba(255,255,255,0.06)",
-                    border: `2px solid ${claimed ? accent : active ? `${accent}80` : "rgba(255,255,255,0.12)"}`,
+                    background: claimed ? "#FFF1C7" : active ? `${accent}22` : "rgba(255,255,255,0.62)",
+                    border: `2px solid ${claimed ? accent : active ? `${accent}80` : "rgba(210,156,76,0.28)"}`,
                     display: "flex", alignItems: "center", justifyContent: "center",
                     fontSize: claimed ? 13 : 10,
                     transition: "all 0.3s",
                     animation: claimed ? "milestoneUnlock 0.5s ease-out" : undefined,
                   }}
                 >
-                  {claimed ? "⭐" : (
-                    <span style={{ color: active ? accent : "rgba(255,255,255,0.25)", fontWeight: 900, fontSize: 10 }}>
-                      {i + 1}
-                    </span>
+                  {claimed ? icons[i] : active ? icons[i] : (
+                    <span style={{ color: "#B8946C", fontWeight: 900, fontSize: 10 }}>{i + 1}</span>
                   )}
                 </div>
                 <span style={{
                   fontSize: 10, fontWeight: 700,
-                  color: claimed ? accent : "rgba(255,255,255,0.3)",
+                  color: claimed || active ? accent : GARDEN_MUTED,
                   letterSpacing: "0.04em",
                 }}>
                   {config.goals[i] >= 1000 ? `${config.goals[i] / 1000}K` : config.goals[i]}

@@ -115,10 +115,10 @@ export function GameEndModal({
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/45 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 backdrop-blur-sm" style={{ background: "rgba(76,46,12,0.34)" }}>
       <div
         className="w-full max-w-sm rounded-3xl p-6 shadow-2xl flex flex-col gap-4 animate-in zoom-in-95 duration-300"
-        style={{ background: theme.popupBg }}
+        style={{ background: theme.popupBg, border: `1px solid ${theme.borderColor}55` }}
       >
 
         {/* ── 결과 헤더 ────────────────────────────────── */}

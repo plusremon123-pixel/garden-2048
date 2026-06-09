@@ -47,52 +47,73 @@ export interface SeasonTheme {
   };
 }
 
-/* ── 전체 갈색 팔레트 (홈 메뉴 missions 카드 기준)
- *    missions: bg=#F8E6C6, text=#4C2E0C
- *    팝업/플레이 화면/보드/셀까지 모두 갈색 톤으로 통일.
- *    sub-tones:
- *      배경  = #FAF2E4 (밝은 크림)
- *      보드  = #E8D0A8 (따뜻한 탠)
- *      셀    = #D4B088 (우디 탠)
- *      패널  = #F8E6C6 (missions 카드)
- *      강조  = #8B5A2B (미드 브라운 CTA) */
-const BROWN_THEME = {
-  backgroundColor:   "#FAF2E4",
-  boardColor:        "#E8D0A8",
-  cellColor:         "#D4B088",
-  panelColor:        "#F8E6C6",
-  popupBg:           "#FFF7EA",
-  btnPrimary:        "hsl(26 45% 36%)",       /* #8B5A2B 톤 */
-  btnPrimaryText:    "#FFF7EA",
-  btnPrimaryHover:   "hsl(26 50% 28%)",
-  btnSecondary:      "#F8E6C6",
+const GARDEN_THEME = {
+  backgroundColor:   "#FFF8EA",
+  boardColor:        "#B98045",
+  cellColor:         "#E8D0A8",
+  panelColor:        "rgba(255,248,232,0.92)",
+  popupBg:           "#FFF8EA",
+  btnPrimary:        "#F59E0B",
+  btnPrimaryText:    "#FFFDF7",
+  btnPrimaryHover:   "#D97706",
+  btnSecondary:      "#F5E3C4",
   btnSecondaryText:  "#4C2E0C",
   textPrimary:       "#4C2E0C",
-  textSecondary:     "#6B4423",
-  textMuted:         "#B8946C",
-  accentColor:       "#D4A55C",
-  borderColor:       "#D4B088",
-  shadow:            "rgba(76,46,12,0.14)",
-  popupHeaderBg:     "#F8E6C6",
+  textSecondary:     "#74502A",
+  textMuted:         "#A98258",
+  accentColor:       "#63A35C",
+  borderColor:       "#E0BD83",
+  shadow:            "rgba(96,58,18,0.16)",
+  popupHeaderBg:     "linear-gradient(180deg, #FFF1D0 0%, #FFE2A6 100%)",
   popupHeaderText:   "#4C2E0C",
 } as const;
 
-const BROWN_CSS_VARS = {
-  background:   "34 60% 94%",
-  foreground:   "22 60% 18%",
-  board:        "30 50% 78%",
-  cell:         "30 45% 68%",
-  primary:      "26 45% 36%",
-  primaryHover: "26 50% 28%",
+const GARDEN_CSS_VARS = {
+  background:   "38 100% 96%",
+  foreground:   "27 74% 17%",
+  board:        "28 45% 50%",
+  cell:         "34 55% 78%",
+  primary:      "38 92% 50%",
+  primaryHover: "32 95% 44%",
 } as const;
 
-/* 4계절 모두 동일한 갈색 팔레트를 사용한다.
-   (이후 계절감이 필요해지면 backgroundColor/boardColor/cellColor 만 계절별로 덮어쓸 것) */
 export const SEASON_THEMES: Record<Season, SeasonTheme> = {
-  spring: { ...BROWN_THEME, cssVars: { ...BROWN_CSS_VARS } },
-  summer: { ...BROWN_THEME, cssVars: { ...BROWN_CSS_VARS } },
-  autumn: { ...BROWN_THEME, cssVars: { ...BROWN_CSS_VARS } },
-  winter: { ...BROWN_THEME, cssVars: { ...BROWN_CSS_VARS } },
+  spring: {
+    ...GARDEN_THEME,
+    panelColor: "rgba(255,248,232,0.94)",
+    popupBg: "#FFF8EA",
+    accentColor: "#63A35C",
+    cssVars: { ...GARDEN_CSS_VARS },
+  },
+  summer: {
+    ...GARDEN_THEME,
+    backgroundColor: "#FFFBE3",
+    panelColor: "rgba(255,250,221,0.94)",
+    popupBg: "#FFFBE8",
+    accentColor: "#4F9A37",
+    borderColor: "#E8C76F",
+    cssVars: { ...GARDEN_CSS_VARS, background: "52 100% 95%" },
+  },
+  autumn: {
+    ...GARDEN_THEME,
+    backgroundColor: "#FFF2DC",
+    panelColor: "rgba(255,239,216,0.94)",
+    popupBg: "#FFF3E2",
+    accentColor: "#C56A2D",
+    borderColor: "#DFA86A",
+    cssVars: { ...GARDEN_CSS_VARS, background: "31 100% 94%" },
+  },
+  winter: {
+    ...GARDEN_THEME,
+    backgroundColor: "#F0F8FF",
+    panelColor: "rgba(246,252,255,0.94)",
+    popupBg: "#F6FBFF",
+    btnSecondary: "#E3F2FD",
+    accentColor: "#5E9BC8",
+    borderColor: "#BBD8EA",
+    shadow: "rgba(38,78,112,0.14)",
+    cssVars: { ...GARDEN_CSS_VARS, background: "204 100% 97%", primary: "38 88% 52%" },
+  },
 };
 
 /**

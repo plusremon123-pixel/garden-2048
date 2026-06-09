@@ -29,7 +29,7 @@ export function Header({ score, bestScore, season, onReset, onHome, onShop }: He
         <button
           onClick={onHome}
           className="flex items-center gap-1.5 px-3 py-2 rounded-xl active:scale-95 transition-all text-sm font-medium"
-          style={{ background: theme.btnSecondary, color: theme.textSecondary }}
+          style={{ background: theme.btnSecondary, color: theme.textSecondary, border: `1px solid ${theme.borderColor}55`, boxShadow: `0 6px 14px ${theme.shadow}` }}
           aria-label={t("game.homeBtn")}
         >
           <Home className="w-4 h-4" />
@@ -40,7 +40,7 @@ export function Header({ score, bestScore, season, onReset, onHome, onShop }: He
           <button
             onClick={onShop}
             className="flex items-center gap-1 px-2.5 py-2 rounded-xl active:scale-95 transition-all text-sm font-medium"
-            style={{ background: theme.btnSecondary, color: theme.textMuted }}
+            style={{ background: theme.btnSecondary, color: theme.textMuted, border: `1px solid ${theme.borderColor}55`, boxShadow: `0 6px 14px ${theme.shadow}` }}
             aria-label={t("menu.shop")}
           >
             <ShoppingBag className="w-4 h-4" />
@@ -48,7 +48,7 @@ export function Header({ score, bestScore, season, onReset, onHome, onShop }: He
           <button
             onClick={onReset}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl active:scale-95 transition-all text-sm font-bold shadow-sm"
-            style={{ background: theme.btnPrimary, color: theme.btnPrimaryText }}
+            style={{ background: `linear-gradient(180deg, ${theme.btnPrimary} 0%, ${theme.btnPrimaryHover} 100%)`, color: theme.btnPrimaryText, boxShadow: "0 8px 16px rgba(182,104,10,0.24)" }}
             aria-label={t("game.newGame")}
           >
             <RefreshCw className="w-4 h-4" />
@@ -71,7 +71,7 @@ function ScoreBox({ label, score, theme }: { label: string; score: number; theme
   return (
     <div
       className="flex-1 px-4 py-3 rounded-2xl flex flex-col items-center"
-      style={{ background: theme.panelColor }}
+      style={{ background: theme.panelColor, border: `1px solid ${theme.borderColor}55`, boxShadow: `0 8px 18px ${theme.shadow}` }}
     >
       <span
         className="text-[11px] font-bold tracking-wide mb-1"

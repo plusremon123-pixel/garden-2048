@@ -45,10 +45,11 @@ export function ShopModal({
   return createPortal(
     /* ── 오버레이 ───────────────────────────────────────── */
     <div
-      className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/40 backdrop-blur-sm"
+      className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm"
+      style={{ background: "rgba(76,46,12,0.30)" }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="bg-white w-full sm:max-w-sm rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[85dvh] animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-300">
+      <div className="w-full sm:max-w-sm rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[85dvh] animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-300" style={{ background: "#FFF8EA", border: "1px solid rgba(210,156,76,0.38)" }}>
 
         {/* ── 헤더 ────────────────────────────────────── */}
         <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-board shrink-0">

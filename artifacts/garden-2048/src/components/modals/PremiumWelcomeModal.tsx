@@ -37,10 +37,10 @@ export function PremiumWelcomeModal({ onDone, season = "spring" }: PremiumWelcom
   const [step, setStep] = useState<1 | 2>(1);
 
   return createPortal(
-    <div className="fixed inset-0 z-[500] flex items-center justify-center p-5 bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[500] flex items-center justify-center p-5 backdrop-blur-sm" style={{ background: "rgba(76,46,12,0.34)" }}>
       <div
         className="w-full max-w-[340px] rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
-        style={{ background: theme.popupBg }}
+        style={{ background: theme.popupBg, border: `1px solid ${theme.borderColor}55` }}
       >
 
         {/* ── STEP 1: 환영 + 혜택 ─────────────────────── */}

@@ -47,13 +47,19 @@ export function BaseModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm"
+      className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center backdrop-blur-sm"
+      style={{ background: "rgba(76,46,12,0.30)" }}
       onClick={closeOnBackdrop ? onClose : undefined}
     >
       {/* 모달 패널 */}
       <div
         className="w-full max-w-[420px] rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-modal-slide-up"
-        style={{ maxHeight, background: theme.popupBg }}
+        style={{
+          maxHeight,
+          background: theme.popupBg,
+          border: `1px solid ${theme.borderColor}55`,
+          boxShadow: "0 18px 48px rgba(96,58,18,0.24)",
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── 핸들 (모바일) */}
@@ -64,7 +70,10 @@ export function BaseModal({
         {/* ── 헤더 */}
         <div
           className="flex items-center gap-2.5 px-5 pt-4 pb-3 flex-shrink-0"
-          style={{ borderBottom: `1px solid ${theme.borderColor}40` }}
+          style={{
+            borderBottom: `1px solid ${theme.borderColor}50`,
+            background: theme.popupHeaderBg,
+          }}
         >
           <div className="flex-1 flex items-center gap-2">
             {iconSrc

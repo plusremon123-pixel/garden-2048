@@ -25,10 +25,10 @@ export function FreeTrialModal({ onStart, onClose, season = "spring" }: FreeTria
   ];
 
   return createPortal(
-    <div className="fixed inset-0 z-[400] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[400] flex items-end sm:items-center justify-center backdrop-blur-sm" style={{ background: "rgba(76,46,12,0.34)" }}>
       <div
         className="w-full sm:max-w-sm rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col animate-in slide-in-from-bottom-4 duration-300 overflow-hidden"
-        style={{ background: theme.popupBg }}
+        style={{ background: theme.popupBg, border: `1px solid ${theme.borderColor}55` }}
       >
         {/* 상단 헤더 배너 */}
         <div

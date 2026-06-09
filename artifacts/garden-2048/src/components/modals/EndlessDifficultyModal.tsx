@@ -10,18 +10,10 @@ import {
   type EndlessDifficulty,
 } from "@/utils/endlessModeData";
 import { useTranslation } from "@/i18n";
-import type { Season } from "@/utils/seasonData";
-
-/* ── 계절별 무한 게임 배경 ────────────────────────────────── */
-const ENDLESS_BG: Record<Season, string> = {
-  spring: "/ENDLESS_bg_1.svg",
-  summer: "/ENDLESS_bg_2.svg",
-  autumn: "/ENDLESS_bg_3.svg",
-  winter: "/ENDLESS_bg_4.svg",
-};
+import { SEASON_BG, type Season } from "@/utils/seasonData";
 
 /* ── 홈 화면과 동일한 디자인 좌표계 ────────────────────────
-   ENDLESS_bg_*.svg = 1120 × 2048 (home_bg와 동일)
+   새 map-*.png = 1120 × 2048 계열 세로형 정원 배경
    START 버튼 위치: (365, 1715), 원본 너비 430px
 ──────────────────────────────────────────────────────────── */
 const DESIGN_W = 1120;
@@ -61,33 +53,33 @@ const DIFF_CONFIG: Record<EndlessDifficulty, {
 }> = {
   easy: {
     emoji:     "🌱",
-    accent:    "#16a34a",
-    iconBg:    "#dcfce7",
-    selBorder: "#22c55e",
-    selShadow: "0 0 0 3px rgba(34,197,94,0.25), 0 8px 24px rgba(34,197,94,0.2)",
-    tagBg:     "#dcfce7",
-    tagText:   "#15803d",
-    startBg:   "linear-gradient(135deg,#4ade80,#16a34a)",
+    accent:    "#4F9A37",
+    iconBg:    "#E6F6D8",
+    selBorder: "#5FAE45",
+    selShadow: "0 0 0 3px rgba(95,174,69,0.18), 0 10px 24px rgba(96,58,18,0.18)",
+    tagBg:     "#E6F6D8",
+    tagText:   "#2F6E22",
+    startBg:   "linear-gradient(180deg,#FFB13B,#F59E0B)",
   },
   normal: {
     emoji:     "🌻",
-    accent:    "#d97706",
+    accent:    "#D97706",
     iconBg:    "#fef9c3",
     selBorder: "#f59e0b",
-    selShadow: "0 0 0 3px rgba(245,158,11,0.25), 0 8px 24px rgba(245,158,11,0.2)",
+    selShadow: "0 0 0 3px rgba(245,158,11,0.20), 0 10px 24px rgba(96,58,18,0.18)",
     tagBg:     "#fef9c3",
     tagText:   "#92400e",
-    startBg:   "linear-gradient(135deg,#fbbf24,#d97706)",
+    startBg:   "linear-gradient(180deg,#FFB13B,#F59E0B)",
   },
   hard: {
     emoji:     "🌵",
-    accent:    "#dc2626",
-    iconBg:    "#fee2e2",
-    selBorder: "#ef4444",
-    selShadow: "0 0 0 3px rgba(239,68,68,0.25), 0 8px 24px rgba(239,68,68,0.2)",
-    tagBg:     "#fee2e2",
-    tagText:   "#991b1b",
-    startBg:   "linear-gradient(135deg,#f87171,#dc2626)",
+    accent:    "#B85B32",
+    iconBg:    "#FFE2D1",
+    selBorder: "#D46F39",
+    selShadow: "0 0 0 3px rgba(212,111,57,0.18), 0 10px 24px rgba(96,58,18,0.18)",
+    tagBg:     "#FFE2D1",
+    tagText:   "#88411F",
+    startBg:   "linear-gradient(180deg,#FFB13B,#F59E0B)",
   },
 };
 
@@ -138,7 +130,7 @@ export function EndlessDifficultyModal({
     }
   };
 
-  const bgUrl = ENDLESS_BG[season] ?? ENDLESS_BG.spring;
+  const bgUrl = SEASON_BG[season] ?? SEASON_BG.spring;
 
   return (
     <div
@@ -150,7 +142,7 @@ export function EndlessDifficultyModal({
       <div
         className="absolute inset-0"
         style={{
-          backgroundImage: `url("${bgUrl}")`,
+          backgroundImage: `linear-gradient(180deg, rgba(255,250,236,0.18), rgba(255,248,234,0.68)), url("${bgUrl}")`,
           backgroundSize: "cover",
           backgroundPosition: "center top",
         }}
@@ -174,11 +166,12 @@ export function EndlessDifficultyModal({
           style={{
             position: "absolute", left: 16, top: 12,
             width: 36, height: 36, borderRadius: 99,
-            background: "rgba(0,0,0,0.3)",
-            backdropFilter: "blur(8px)",
-            border: "1px solid rgba(255,255,255,0.12)",
+            background: "linear-gradient(180deg, rgba(255,250,236,0.96), rgba(255,240,204,0.92))",
+            backdropFilter: "blur(10px)",
+            border: "1px solid rgba(210,156,76,0.38)",
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 16, color: "#fff", cursor: "pointer",
+            fontSize: 16, color: "#4C2E0C", cursor: "pointer",
+            boxShadow: "0 8px 18px rgba(96,58,18,0.14)",
             zIndex: 2,
           }}
         >←</button>
@@ -189,16 +182,16 @@ export function EndlessDifficultyModal({
           paddingTop: 6,
         }}>
           <h1 style={{
-            fontSize: 28, fontWeight: 900, color: "#fff",
-            letterSpacing: "0.08em", lineHeight: 1,
-            textShadow: "0 2px 16px rgba(0,0,0,0.5)",
+            fontSize: 28, fontWeight: 900, color: "#4C2E0C",
+            letterSpacing: "0.02em", lineHeight: 1,
+            textShadow: "0 2px 0 rgba(255,255,255,0.85)",
           }}>
             {t("endless.title")}
           </h1>
           <p style={{
             fontSize: 13, fontWeight: 600, marginTop: 6,
-            color: "rgba(255,255,255,0.55)",
-            letterSpacing: "0.04em",
+            color: "#8C6842",
+            letterSpacing: "0.01em",
           }}>
             {t("endless.selectDiff")}
           </p>
@@ -225,11 +218,11 @@ export function EndlessDifficultyModal({
                 width: "82%", maxWidth: 310,
                 borderRadius: 18,
                 padding: "14px 16px",
-                background: "#fff",
-                border: `2px solid ${isSel ? dc.selBorder : "transparent"}`,
+                background: "linear-gradient(180deg, rgba(255,250,236,0.98), rgba(255,244,216,0.95))",
+                border: `2px solid ${isSel ? dc.selBorder : "rgba(210,156,76,0.25)"}`,
                 boxShadow: isSel
                   ? dc.selShadow
-                  : "0 4px 16px rgba(0,0,0,0.18)",
+                  : "0 8px 20px rgba(96,58,18,0.13)",
                 display: "flex", alignItems: "center", gap: 14,
                 textAlign: "left", cursor: "pointer",
                 transition: `border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.4s ease ${delay}s, transform 0.4s ease ${delay}s`,
@@ -252,7 +245,7 @@ export function EndlessDifficultyModal({
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                   <span style={{
                     fontSize: 18, fontWeight: 900,
-                    color: "#1a1a1a", lineHeight: 1,
+                    color: "#4C2E0C", lineHeight: 1,
                   }}>
                     {t(`endless.diff.${diff}`)}
                   </span>
@@ -303,7 +296,7 @@ export function EndlessDifficultyModal({
               borderRadius: 999,
               background: dc.startBg,
               backdropFilter: "blur(8px)",
-              boxShadow: `0 4px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.3)`,
+              boxShadow: `0 12px 24px rgba(182,104,10,0.28), inset 0 2px 0 rgba(255,255,255,0.55)`,
               animation: "endlessStartGlow 2.4s ease-in-out infinite",
               overflow:   "hidden",
             }}
@@ -312,7 +305,7 @@ export function EndlessDifficultyModal({
             <div style={{
               position: "absolute", top: 0, bottom: 0,
               width: "60%", borderRadius: "50%",
-              background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent)",
+              background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.32), transparent)",
               animation: "endlessStartShine 3s ease-in-out infinite",
               pointerEvents: "none",
             }} />
@@ -349,7 +342,7 @@ export function EndlessDifficultyModal({
       {showConfirm && save && (
         <div
           className="absolute inset-0 z-30 flex items-end justify-center pb-24"
-          style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(6px)" }}
+          style={{ background: "rgba(76,46,12,0.34)", backdropFilter: "blur(8px)" }}
           onClick={() => setShowConfirm(false)}
         >
           <div
@@ -357,19 +350,19 @@ export function EndlessDifficultyModal({
             style={{
               width: "calc(100% - 40px)", maxWidth: 340,
               borderRadius: 24,
-              background: "linear-gradient(160deg, #1a1030 0%, #100818 100%)",
-              border: "1.5px solid rgba(255,255,255,0.12)",
-              boxShadow: "0 8px 48px rgba(0,0,0,0.7)",
+              background: "linear-gradient(180deg, rgba(255,250,236,0.98), rgba(255,240,204,0.95))",
+              border: "1.5px solid rgba(210,156,76,0.38)",
+              boxShadow: "0 18px 48px rgba(96,58,18,0.24)",
               padding: "28px 24px 20px",
               display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
             }}
           >
             <div style={{ fontSize: 36, marginBottom: 4 }}>💾</div>
-            <p style={{ fontSize: 17, fontWeight: 900, color: "#fff", textAlign: "center" }}>
+            <p style={{ fontSize: 17, fontWeight: 900, color: "#4C2E0C", textAlign: "center" }}>
               저장된 게임이 있어요
             </p>
             <p style={{
-              fontSize: 13, color: "rgba(255,255,255,0.45)",
+              fontSize: 13, color: "#9A7048",
               textAlign: "center", lineHeight: 1.5, marginBottom: 8,
             }}>
               {t(`endless.diff.${save.difficulty}`)} 게임을 이어할까요?
@@ -378,7 +371,7 @@ export function EndlessDifficultyModal({
               onClick={() => onContinue(save.difficulty)}
               style={{
                 width: "100%", padding: "14px 0", borderRadius: 14,
-                background: "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
+                background: "linear-gradient(180deg, #7BCB63 0%, #4F9A37 100%)",
                 border: "none", color: "#fff",
                 fontSize: 16, fontWeight: 900, cursor: "pointer",
               }}
@@ -389,9 +382,9 @@ export function EndlessDifficultyModal({
               onClick={() => { setShowConfirm(false); onStart(selected); }}
               style={{
                 width: "100%", padding: "13px 0", borderRadius: 14,
-                background: "rgba(255,255,255,0.07)",
-                border: "1px solid rgba(255,255,255,0.12)",
-                color: "rgba(255,255,255,0.55)",
+                background: "rgba(255,255,255,0.52)",
+                border: "1px solid rgba(210,156,76,0.38)",
+                color: "#9A7048",
                 fontSize: 15, fontWeight: 700, cursor: "pointer", marginTop: 4,
               }}
             >

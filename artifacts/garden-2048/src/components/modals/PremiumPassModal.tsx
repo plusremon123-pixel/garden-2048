@@ -52,10 +52,13 @@ export function PremiumPassModal({
   ];
 
   return createPortal(
-    <div className="fixed inset-0 z-[400] flex items-center justify-center p-6 bg-black/50 backdrop-blur-sm">
+    <div
+      className="fixed inset-0 z-[400] flex items-center justify-center p-6 backdrop-blur-sm"
+      style={{ background: "rgba(76,46,12,0.34)" }}
+    >
       <div
         className="w-full max-w-[320px] rounded-3xl shadow-2xl flex flex-col animate-modal-slide-up overflow-hidden"
-        style={{ background: theme.popupBg }}
+        style={{ background: theme.popupBg, border: `1px solid ${theme.borderColor}55` }}
       >
         {/* ── 상단 배너 ──────────────────────────────── */}
         <div

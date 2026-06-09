@@ -237,8 +237,8 @@ export function HomeShopModal({
             className="absolute inset-0"
             style={{
               background: isPremiumActive
-                ? "linear-gradient(175deg, rgba(4,60,38,0.88) 0%, rgba(6,78,59,0.82) 50%, rgba(15,118,110,0.72) 100%)"
-                : "linear-gradient(175deg, rgba(15,10,60,0.90) 0%, rgba(49,46,129,0.85) 50%, rgba(88,28,135,0.78) 100%)",
+                ? "linear-gradient(175deg, rgba(232,255,221,0.92) 0%, rgba(208,244,191,0.86) 55%, rgba(156,211,129,0.78) 100%)"
+                : "linear-gradient(175deg, rgba(255,248,222,0.94) 0%, rgba(255,226,166,0.88) 55%, rgba(245,158,11,0.76) 100%)",
             }}
           />
 
@@ -288,7 +288,7 @@ export function HomeShopModal({
                 {/* 타이틀 */}
                 <p
                   className="text-xl font-black text-white text-center"
-                  style={{ textShadow: "0 2px 12px rgba(0,0,0,0.8), 0 0 24px rgba(52,211,153,0.5)" }}
+                    style={{ color: "#14532D", textShadow: "0 1px 0 rgba(255,255,255,0.75)" }}
                 >
                   {t("shop.premiumActive")}
                 </p>
@@ -307,12 +307,12 @@ export function HomeShopModal({
                       style={{ background: "rgba(52,211,153,0.18)", border: "1px solid rgba(52,211,153,0.35)" }}
                     >
                       <span className="text-base leading-none">{icon}</span>
-                      <span className="text-xs font-bold text-emerald-100">{label}</span>
+                      <span className="text-xs font-bold" style={{ color: "#14532D" }}>{label}</span>
                     </div>
                   ))}
                 </div>
 
-                <p className="text-[11px] text-emerald-300 font-medium">{t("shop.manageSubscription")}</p>
+                <p className="text-[11px] font-medium" style={{ color: "#2F6E22" }}>{t("shop.manageSubscription")}</p>
               </>
             ) : (
               /* ── 구독 전 ─────────────────────────────── */
@@ -321,11 +321,11 @@ export function HomeShopModal({
                 <div className="flex flex-col items-center gap-1">
                   <p
                     className="text-xl font-black text-white text-center"
-                    style={{ textShadow: "0 2px 12px rgba(0,0,0,0.9), 0 0 28px rgba(196,130,255,0.5)" }}
+                    style={{ color: "#5D2E0C", textShadow: "0 1px 0 rgba(255,255,255,0.75)" }}
                   >
                     {t("shop.premiumPass")}
                   </p>
-                  <p className="text-[12px] font-semibold text-purple-200">
+                  <p className="text-[12px] font-semibold" style={{ color: "#7B5800" }}>
                     {t("shop.premiumSubtitle")}
                   </p>
                 </div>
@@ -341,10 +341,10 @@ export function HomeShopModal({
                     <div
                       key={label}
                       className="flex items-center gap-1.5 rounded-xl px-3 py-2"
-                      style={{ background: "rgba(167,139,250,0.20)", border: "1px solid rgba(167,139,250,0.40)" }}
+                      style={{ background: "rgba(255,255,255,0.46)", border: "1px solid rgba(210,156,76,0.38)" }}
                     >
                       <span className="text-base leading-none">{icon}</span>
-                      <span className="text-xs font-bold text-purple-100">{label}</span>
+                      <span className="text-xs font-bold" style={{ color: "#5D2E0C" }}>{label}</span>
                     </div>
                   ))}
                 </div>
@@ -353,7 +353,7 @@ export function HomeShopModal({
                 <div className="flex flex-col items-center gap-2 w-full">
                   <span
                     className="text-sm font-black text-yellow-300"
-                    style={{ textShadow: "0 1px 8px rgba(0,0,0,0.8)" }}
+                    style={{ color: "#5D2E0C", textShadow: "0 1px 0 rgba(255,255,255,0.75)" }}
                   >
                     {t("premium.monthlyPrice")}
                   </span>

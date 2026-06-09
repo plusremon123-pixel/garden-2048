@@ -28,7 +28,7 @@ import { PlayerData } from "@/utils/playerData";
 import { ShopItem, ShopItemId, SHOP_ITEMS, type Inventory } from "@/utils/shopData";
 import { CARDS, LOADOUT_ITEMS, CARD_COLLECTION, type CardId } from "@/utils/loadoutData";
 import { MissionId, WeeklyMissionId } from "@/utils/missionData";
-import { getSeason } from "@/utils/seasonData";
+import { getSeason, SEASON_BG } from "@/utils/seasonData";
 import { SEASON_THEMES } from "@/utils/seasonTheme";
 import {
   incrementGameCount,
@@ -857,7 +857,12 @@ export default function Game({
   const gameContent = (
     <div
       className="relative min-h-[100dvh] w-full flex flex-col items-center overflow-hidden"
-      style={{ background: theme.backgroundColor }}
+      style={{
+        backgroundColor: theme.backgroundColor,
+        backgroundImage: `linear-gradient(180deg, rgba(255,250,236,0.58), rgba(255,248,234,0.88)), url("${SEASON_BG[season]}")`,
+        backgroundSize: "cover",
+        backgroundPosition: "center top",
+      }}
     >
 
       {/* ── 배경 + 콘텐츠 영역 ─────────────────────────────── */}
@@ -1075,11 +1080,13 @@ export default function Game({
       {/* ── 아이템 구매 확인 팝업 ─────────────────────────── */}
       {pendingBuy && createPortal(
         <div
-          className="fixed inset-0 z-[250] flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm"
+          className="fixed inset-0 z-[250] flex items-center justify-center p-6 backdrop-blur-sm"
+          style={{ background: "rgba(76,46,12,0.34)" }}
           onClick={() => setPendingBuy(null)}
         >
           <div
-            className="w-full max-w-[300px] bg-white rounded-3xl p-6 shadow-2xl animate-modal-slide-up"
+            className="w-full max-w-[300px] rounded-3xl p-6 shadow-2xl animate-modal-slide-up"
+            style={{ background: theme.popupBg, border: `1px solid ${theme.borderColor}55` }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-center mb-3">
@@ -1118,11 +1125,13 @@ export default function Game({
       {/* ── 타일 삭제 확인 팝업 ───────────────────────────── */}
       {pendingRemoveTile && createPortal(
         <div
-          className="fixed inset-0 z-[250] flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm"
+          className="fixed inset-0 z-[250] flex items-center justify-center p-6 backdrop-blur-sm"
+          style={{ background: "rgba(76,46,12,0.34)" }}
           onClick={handleCancelRemoveTile}
         >
           <div
-            className="w-full max-w-[300px] bg-white rounded-3xl p-6 shadow-2xl animate-modal-slide-up"
+            className="w-full max-w-[300px] rounded-3xl p-6 shadow-2xl animate-modal-slide-up"
+            style={{ background: theme.popupBg, border: `1px solid ${theme.borderColor}55` }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-center mb-3">
@@ -1183,8 +1192,8 @@ export default function Game({
 
       {/* ── 인터스티셜 광고 오버레이 ──────────────────────── */}
       {showAdOverlay && createPortal(
-        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80">
-          <div className="bg-white rounded-2xl px-12 py-8 text-center shadow-2xl">
+        <div className="fixed inset-0 z-[999] flex items-center justify-center" style={{ background: "rgba(76,46,12,0.52)", backdropFilter: "blur(8px)" }}>
+          <div className="rounded-2xl px-12 py-8 text-center shadow-2xl" style={{ background: theme.popupBg, border: `1px solid ${theme.borderColor}55` }}>
             <p className="text-xs font-medium text-foreground/30 mb-1">{t("game.ad")}</p>
             <p className="text-2xl font-black text-foreground/20">AD</p>
           </div>

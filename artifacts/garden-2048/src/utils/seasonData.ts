@@ -30,12 +30,12 @@ export function getSeason(stage: number): Season {
   return "winter";
 }
 
-/** 계절별 홈 배경 SVG 경로 */
+/** 계절별 홈/게임 배경 PNG 경로 */
 export const SEASON_BG: Record<Season, string> = {
-  spring: "/home_bg_1.svg",
-  summer: "/home_bg_2.svg",
-  autumn: "/home_3.svg",    // public 폴더 실제 파일명 기준
-  winter: "/home_bg_4.svg",
+  spring: "/maps/wide10-spring-1120.png",
+  summer: "/maps/wide10-summer-1120.png",
+  autumn: "/maps/wide10-autumn-1120.png",
+  winter: "/maps/wide10-winter-1120.png",
 };
 
 /**

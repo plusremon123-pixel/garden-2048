@@ -37,27 +37,27 @@ export function EndlessGameOverModal({
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="w-full max-w-[360px] mx-4 bg-white rounded-3xl shadow-2xl overflow-hidden animate-modal-slide-up">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center backdrop-blur-sm" style={{ background: "rgba(76,46,12,0.34)" }}>
+      <div className="w-full max-w-[360px] mx-4 rounded-3xl shadow-2xl overflow-hidden animate-modal-slide-up" style={{ background: "#FFF8EA" }}>
 
         {/* 헤더 */}
-        <div className="bg-gradient-to-br from-slate-500 to-slate-700 px-5 pt-6 pb-4 text-center">
+        <div className="px-5 pt-6 pb-4 text-center" style={{ background: "linear-gradient(180deg, #FFE6B0 0%, #F7C66D 100%)" }}>
           <div className="text-4xl mb-2">😔</div>
-          <h2 className="text-lg font-black text-white">{t("endless.gameOver")}</h2>
-          <p className="text-sm text-white/70 mt-0.5">{t("endless.boardFull")}</p>
+          <h2 className="text-lg font-black" style={{ color: "#4C2E0C" }}>{t("endless.gameOver")}</h2>
+          <p className="text-sm mt-0.5" style={{ color: "#74502A" }}>{t("endless.boardFull")}</p>
         </div>
 
         <div className="px-5 py-4 flex flex-col gap-3">
 
           {/* 결과 */}
           <div className="grid grid-cols-2 gap-2">
-            <div className="bg-foreground/4 rounded-2xl px-3 py-2 text-center">
-              <p className="text-xs text-foreground/40">{t("game.score")}</p>
-              <p className="text-base font-black text-foreground">{score.toLocaleString()}</p>
+            <div className="rounded-2xl px-3 py-2 text-center" style={{ background: "rgba(255,244,216,0.92)", border: "1px solid rgba(210,156,76,0.28)" }}>
+              <p className="text-xs" style={{ color: "#9A7048" }}>{t("game.score")}</p>
+              <p className="text-base font-black" style={{ color: "#4C2E0C" }}>{score.toLocaleString()}</p>
             </div>
-            <div className="bg-foreground/4 rounded-2xl px-3 py-2 text-center">
-              <p className="text-xs text-foreground/40">{t("game.best")}</p>
-              <p className="text-base font-black text-foreground">{highestTile.toLocaleString()}</p>
+            <div className="rounded-2xl px-3 py-2 text-center" style={{ background: "rgba(255,244,216,0.92)", border: "1px solid rgba(210,156,76,0.28)" }}>
+              <p className="text-xs" style={{ color: "#9A7048" }}>{t("game.best")}</p>
+              <p className="text-base font-black" style={{ color: "#4C2E0C" }}>{highestTile.toLocaleString()}</p>
             </div>
           </div>
 
@@ -67,7 +67,7 @@ export function EndlessGameOverModal({
               onClick={handleContinueAd}
               disabled={adState === "watching"}
               className="w-full py-3.5 rounded-2xl text-white text-sm font-bold shadow-md active:scale-95 transition-all disabled:opacity-60"
-              style={{ background: "linear-gradient(135deg,#22c55e,#16a34a)" }}
+              style={{ background: "linear-gradient(180deg,#7BCB63,#4F9A37)" }}
             >
               {adState === "watching"
                 ? <span className="flex items-center justify-center gap-2">
@@ -86,13 +86,15 @@ export function EndlessGameOverModal({
           <div className="flex gap-2">
             <button
               onClick={onRestart}
-              className="flex-1 py-2.5 rounded-2xl bg-foreground/6 border border-foreground/10 text-sm font-bold text-foreground/55 active:scale-95 transition-all"
+              className="flex-1 py-2.5 rounded-2xl text-sm font-bold active:scale-95 transition-all"
+              style={{ background: "rgba(255,255,255,0.62)", border: "1px solid rgba(210,156,76,0.38)", color: "#74502A" }}
             >
               {t("endless.restart")}
             </button>
             <button
               onClick={onHome}
-              className="flex-1 py-2.5 rounded-2xl bg-foreground/6 border border-foreground/10 text-sm font-bold text-foreground/55 active:scale-95 transition-all"
+              className="flex-1 py-2.5 rounded-2xl text-sm font-bold active:scale-95 transition-all"
+              style={{ background: "rgba(255,255,255,0.62)", border: "1px solid rgba(210,156,76,0.38)", color: "#74502A" }}
             >
               {t("game.homeBtn")}
             </button>

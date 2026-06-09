@@ -10,7 +10,8 @@ import {
   MissionState, MissionId, DAILY_MISSIONS,
   WeeklyMissionState, WeeklyMissionId, WEEKLY_MISSIONS,
 } from "@/utils/missionData";
-import { getAdCoinState } from "@/utils/adService";
+import { getAdCoinState, watchAdForCoins } from "@/utils/adService";
+import { showBanner, removeBanner } from "@/utils/adProvider";
 import { type Inventory, type ShopItemId } from "@/utils/shopData";
 import type { SubscriptionState } from "@/utils/subscriptionData";
 import type { GameSettings } from "@/hooks/useSettings";
@@ -20,7 +21,6 @@ import {
   getSeason,
   SEASON_BG,
   SEASON_PULSE_COLOR,
-  SEASON_NODE_FILTER,
 } from "@/utils/seasonData";
 import { SEASON_THEMES, type SeasonTheme } from "@/utils/seasonTheme";
 import { SeasonTransition }       from "./modals/SeasonTransition";
@@ -57,32 +57,22 @@ type StageNodeTemplate = {
   offsetY?: number;
 };
 
-/* 20개 노드 — 디자인 좌표 (cx, cy) 기준 center anchor */
-/* 돌길 중앙 center anchor — 레퍼런스 이미지 정밀 트레이싱 후 균등 간격(≈173px) */
+/* 10개 노드 — 넓은 단일 S자 길 중앙 기준 center anchor */
+/* stage 진행 방향: 위 → 아래 */
 const STAGE_NODE_TEMPLATES: StageNodeTemplate[] = [
-  { stage:  1, cx:  914, cy: 1718 },
-  { stage:  2, cx:  856, cy: 1588 },
-  { stage:  3, cx:  716, cy: 1523 },
-  { stage:  4, cx:  560, cy: 1548 },
-  { stage:  5, cx:  395, cy: 1558 },
-  { stage:  6, cx:  264, cy: 1483 },
-  { stage:  7, cx:  217, cy: 1353 },
-  { stage:  8, cx:  304, cy: 1235 },
-  { stage:  9, cx:  466, cy: 1194 },
-  { stage: 10, cx:  629, cy: 1206 },
-  { stage: 11, cx:  798, cy: 1183 },
-  { stage: 12, cx:  898, cy: 1064 },
-  { stage: 13, cx:  873, cy:  934 },
-  { stage: 14, cx:  779, cy:  828 },
-  { stage: 15, cx:  659, cy:  756 },
-  { stage: 16, cx:  524, cy:  722 },
-  { stage: 17, cx:  399, cy:  703 },
-  { stage: 18, cx:  305, cy:  638 },
-  { stage: 19, cx:  415, cy:  567 },
-  { stage: 20, cx:  544, cy:  523 },
+  { stage:  1, cx:  575, cy:  455 },
+  { stage:  2, cx:  535, cy:  610 },
+  { stage:  3, cx:  600, cy:  770 },
+  { stage:  4, cx:  565, cy:  930 },
+  { stage:  5, cx:  610, cy: 1085 },
+  { stage:  6, cx:  675, cy: 1235 },
+  { stage:  7, cx:  610, cy: 1375 },
+  { stage:  8, cx:  545, cy: 1510 },
+  { stage:  9, cx:  575, cy: 1635 },
+  { stage: 10, cx:  620, cy: 1760 },
 ];
 
-const LEVELS_PER_PAGE = 20;
+const LEVELS_PER_PAGE = 10;
 const MAX_PAGES       = 5;
 
 /* ── Menu data ─────────────────────────────────────────────── */
@@ -259,7 +249,7 @@ export function FrontScreen({
   const leftMenuItems: MenuItemDef[] = [
     { key: "mission",  x:  37, y: 166, iconPng: "/menu-mission.png",  bgColor: mp.bg, textColor: mp.text, shadowColor: mp.shadow },
     { key: "card",     x:  37, y: 379, iconPng: "/menu-card.png",     bgColor: mp.bg, textColor: mp.text, shadowColor: mp.shadow },
-    { key: "infinite", x:  37, y: 592, iconPng: "/menu-infinite.png", bgColor: "#7F239D", textColor: "#F4FFF8", shadowColor: "rgba(81,9,104,0.65)" },
+    { key: "infinite", x:  37, y: 592, iconPng: "/menu-infinite.png", bgColor: mp.bg, textColor: mp.text, shadowColor: mp.shadow },
   ];
   const rightMenuItems: MenuItemDef[] = [
     { key: "shop",     x: 906, y: 166, iconPng: "/menu-shop.png",     bgColor: mp.bg, textColor: mp.text, shadowColor: mp.shadow },
@@ -310,7 +300,7 @@ export function FrontScreen({
         <TutorialModal onDone={() => setShowTutorialReplay(false)} />
       )}
 
-{/* ── 배경 이미지 — 계절(season)에 따라 home_bg_1~4.svg 로 자동 교체 ── */}
+{/* ── 배경 이미지 — 계절(season)에 따라 새 정원 PNG로 자동 교체 ── */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
@@ -319,7 +309,7 @@ export function FrontScreen({
           backgroundPosition: "center top",
           backgroundRepeat:   "no-repeat",
           zIndex: 0,
-          opacity:            0.80,
+          opacity:            1,
           transition:         "background-image 0.6s ease, opacity 0.6s ease",
         }}
       />
@@ -442,6 +432,88 @@ export function FrontScreen({
       )}
 
     </div>
+  );
+}
+
+/* ============================================================
+ * HomePathOverlay — 실제 노드 좌표를 따라가는 공용 길 레이어
+ * ============================================================ */
+function HomePathOverlay({ bg, season }: { bg: BgLayout; season: Season }) {
+  const pathD = STAGE_NODE_TEMPLATES
+    .map((node, index) => `${index === 0 ? "M" : "L"} ${node.cx} ${node.cy}`)
+    .join(" ");
+  const palette: Record<Season, { base: string; edge: string; shade: string; opacity: number }> = {
+    spring: { base: "#F6D38F", edge: "#FFF2C8", shade: "#C78842", opacity: 0.92 },
+    summer: { base: "#F3C878", edge: "#FFF0B8", shade: "#BD7F31", opacity: 0.91 },
+    autumn: { base: "#E5AA60", edge: "#FFE0A3", shade: "#9A5724", opacity: 0.93 },
+    winter: { base: "#DDE8EF", edge: "#FFFFFF", shade: "#91A8B6", opacity: 0.88 },
+  };
+  const tone = palette[season];
+
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox={`0 0 ${DESIGN_W} ${DESIGN_H}`}
+      preserveAspectRatio="none"
+      style={{
+        position: "absolute",
+        left: bg.offsetX,
+        top: bg.offsetY,
+        width: bg.renderW,
+        height: bg.renderH,
+        zIndex: 4,
+        pointerEvents: "none",
+        overflow: "visible",
+      }}
+    >
+      <path
+        d={pathD}
+        fill="none"
+        stroke="rgba(108,72,32,0.20)"
+        strokeWidth={138}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        opacity={0.65}
+        transform="translate(0 18)"
+      />
+      <path
+        d={pathD}
+        fill="none"
+        stroke={tone.shade}
+        strokeWidth={128}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        opacity={0.58}
+      />
+      <path
+        d={pathD}
+        fill="none"
+        stroke={tone.edge}
+        strokeWidth={112}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        opacity={0.76}
+      />
+      <path
+        d={pathD}
+        fill="none"
+        stroke={tone.base}
+        strokeWidth={94}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        opacity={tone.opacity}
+      />
+      <path
+        d={pathD}
+        fill="none"
+        stroke="rgba(255,255,255,0.44)"
+        strokeWidth={18}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeDasharray="1 64"
+        opacity={0.84}
+      />
+    </svg>
   );
 }
 
@@ -843,15 +915,42 @@ function HomeStageMap({
 }
 
 /* ============================================================
- * NODE_ASSETS — status 기준 PNG 경로 매핑
- * spring 에셋만 사용하고, 여름/가을/겨울은 CSS filter 로 톤 변경
- * (SEASON_NODE_FILTER in seasonData.ts)
+ * NODE_ASSETS — 계절/상태별 소형 노드 PNG 경로
  * ============================================================ */
-const NODE_ASSETS: Record<NodeStatus, string> = {
-  done:      "/nodes/spring_end.png",
-  current:   "/nodes/spring_stay.png",
-  available: "/nodes/spring_ready.png",
-  locked:    "/nodes/spring_ready.png",
+const NODE_ASSETS: Record<Season, Record<NodeStatus, string>> = {
+  spring: {
+    done:      "/nodes/map/spring-complete.png",
+    current:   "/nodes/map/spring-playing.png",
+    available: "/nodes/map/spring-before.png",
+    locked:    "/nodes/map/spring-before.png",
+  },
+  summer: {
+    done:      "/nodes/map/summer-complete.png",
+    current:   "/nodes/map/summer-playing.png",
+    available: "/nodes/map/summer-before.png",
+    locked:    "/nodes/map/summer-before.png",
+  },
+  autumn: {
+    done:      "/nodes/map/autumn-complete.png",
+    current:   "/nodes/map/autumn-playing.png",
+    available: "/nodes/map/autumn-before.png",
+    locked:    "/nodes/map/autumn-before.png",
+  },
+  winter: {
+    done:      "/nodes/map/winter-complete.png",
+    current:   "/nodes/map/winter-playing.png",
+    available: "/nodes/map/winter-before.png",
+    locked:    "/nodes/map/winter-before.png",
+  },
+};
+
+const NODE_WAVE_FRAMES: Partial<Record<Season, string[]>> = {
+  spring: [
+    "/nodes/map/animated/spring-playing-wave-1.png",
+    "/nodes/map/animated/spring-playing-wave-2.png",
+    "/nodes/map/animated/spring-playing-wave-3.png",
+    "/nodes/map/animated/spring-playing-wave-4.png",
+  ],
 };
 
 /* ============================================================
@@ -873,14 +972,30 @@ function StageNode({ level, status, season, x, y, scaleX, onClick }: StageNodePr
   const isCurrent   = status === "current";
   const isLocked    = status === "locked";
   const isAvailable = status === "available";
+  const [isWaving, setIsWaving] = useState(false);
+  const [waveFrame, setWaveFrame] = useState(0);
 
-  // ── 크기: 절대 변경 금지 ─────────────────────────────────
-  const nodeHeight = 130 * scaleX;
-  const nodeWidth  = nodeHeight * (115 / 130);
+  const nodeSize = (isCurrent ? 168 : 148) * scaleX;
+  const nodeWidth = nodeSize;
+  const nodeHeight = nodeSize;
 
-  // ── 배지 크기: 절대 변경 금지 ────────────────────────────
-  const badgeSize     = Math.max(18, 52 * scaleX);
-  const badgeFontSize = Math.max(10, 14 * scaleX);
+  const badgeSize     = Math.max(20, 44 * scaleX);
+  const badgeFontSize = Math.max(11, 14 * scaleX);
+  const waveFrames = NODE_WAVE_FRAMES[season];
+  const nodeAsset = isCurrent && isWaving && waveFrames
+    ? waveFrames[waveFrame]
+    : NODE_ASSETS[season]?.[status] ?? NODE_ASSETS.spring[status];
+  const handleClick = () => {
+    if (!isCurrent || isWaving) return;
+    setIsWaving(true);
+    setWaveFrame(0);
+    [1, 2, 3].forEach((frame) => {
+      window.setTimeout(() => setWaveFrame(frame), frame * 120);
+    });
+    window.setTimeout(() => {
+      onClick();
+    }, 560);
+  };
 
   return (
     <div
@@ -937,7 +1052,7 @@ function StageNode({ level, status, season, x, y, scaleX, onClick }: StageNodePr
       {/* inner button — float 애니메이션은 여기에만 적용
           (outer div의 translate(-50%,-50%) 위치 기준을 보존하기 위함) */}
       <button
-        onClick={onClick}
+        onClick={handleClick}
         className={isCurrent ? "node-float" : undefined}
         style={{
           display:    "block",
@@ -947,15 +1062,15 @@ function StageNode({ level, status, season, x, y, scaleX, onClick }: StageNodePr
           padding:    0,
           cursor:     isCurrent ? "pointer" : "default",
           position:   "relative",
-          animation:  isCurrent
-            ? "nodeFloat 2.4s ease-in-out infinite"
-            : undefined,
+          animation:  isCurrent && !isWaving
+              ? "nodeCartApproach 2.6s ease-in-out infinite"
+              : undefined,
         }}
         aria-label={`스테이지 ${level}`}
       >
-        {/* PNG 노드 아이콘 — spring 에셋 + 계절별 CSS filter */}
+        {/* PNG 노드 아이콘 — 계절별 흙/캐릭터/꽃핀 화단 */}
         <img
-          src={NODE_ASSETS[status]}
+          src={nodeAsset}
           alt=""
           draggable={false}
           style={{
@@ -963,17 +1078,17 @@ function StageNode({ level, status, season, x, y, scaleX, onClick }: StageNodePr
             width:      "100%",
             height:     nodeHeight,
             objectFit:  "contain",
-            opacity:    status === "done" ? 0.72 : 1,
-            filter:     SEASON_NODE_FILTER[season],
+            opacity:    isLocked ? 0.52 : isAvailable ? 0.88 : 1,
+            filter:     isLocked ? "grayscale(0.35) saturate(0.72) brightness(0.92)" : undefined,
           }}
         />
 
-        {/* 배지 + 숫자 — 위치(left/top/transform) 절대 변경 금지 */}
+        {/* 배지 + 숫자 — 얼굴을 가리지 않도록 흙 영역 하단에 배치 */}
         <div
           style={{
             position:      "absolute",
-            left:          "50%",   // ← 절대 변경 금지
-            top:           "60%",   // ← 절대 변경 금지
+            left:          "50%",
+            top:           isCurrent ? "82%" : "76%",
             transform:     "translateX(-50%)",
             width:         badgeSize,
             height:        badgeSize,
@@ -1078,7 +1193,8 @@ function MissionModal({ missions, weeklyMissions, onClaimDaily, onClaimWeekly, o
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/40 backdrop-blur-sm"
+      className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm"
+      style={{ background: "rgba(76,46,12,0.30)" }}
       onClick={onClose}
     >
       <div
@@ -1268,7 +1384,6 @@ function FreeCoinsButton({ onEarnCoins, onAdWatched }: { onEarnCoins?: (n: numbe
   const handleWatch = async () => {
     if (adState === "watching") return;
     setAdState("watching");
-    const { watchAdForCoins } = await import("@/utils/adService");
     const earned = await watchAdForCoins();
     setAdState("idle");
     if (earned > 0) { onEarnCoins?.(earned); onAdWatched?.(); setAdInfo(getAdCoinState()); }
@@ -1293,12 +1408,10 @@ function FreeCoinsButton({ onEarnCoins, onAdWatched }: { onEarnCoins?: (n: numbe
 function AdBanner() {
   useEffect(() => {
     let cancelled = false;
-    import("@/utils/adProvider").then(({ showBanner }) => {
-      if (!cancelled) void showBanner("bottom");
-    });
+    if (!cancelled) void showBanner("bottom");
     return () => {
       cancelled = true;
-      import("@/utils/adProvider").then(({ removeBanner }) => void removeBanner());
+      void removeBanner();
     };
   }, []);
 

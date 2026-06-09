@@ -120,8 +120,8 @@ export function SettingsModal({
             style={{
               background: isPremium
                 ? "linear-gradient(135deg, rgba(4,60,38,0.10), rgba(6,78,59,0.08))"
-                : "linear-gradient(135deg, rgba(49,46,129,0.08), rgba(76,29,149,0.06))",
-              border: isPremium ? "1.5px solid rgba(52,211,153,0.50)" : "1.5px solid rgba(196,130,255,0.40)",
+                : "linear-gradient(135deg, rgba(255,241,208,0.92), rgba(255,226,166,0.72))",
+              border: isPremium ? "1.5px solid rgba(52,211,153,0.50)" : `1.5px solid ${theme.borderColor}80`,
             }}
             onClick={() => setShowPremiumModal(true)}
           >
@@ -354,7 +354,8 @@ function GoogleConnectModal({ theme, onConnect, onClose, loading }: GoogleConnec
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-black/50 backdrop-blur-sm"
+      className="fixed inset-0 z-[300] flex items-center justify-center p-6 backdrop-blur-sm"
+      style={{ background: "rgba(76,46,12,0.34)" }}
       onClick={onClose}
     >
       <div

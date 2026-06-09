@@ -100,16 +100,20 @@ export function CardUnlockOverlay({ group, onDone }: CardUnlockOverlayProps) {
   return createPortal(
     <div
       className="fixed inset-0 z-[450] flex items-center justify-center"
-      style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(6px)" }}
+      style={{ background: "rgba(76,46,12,0.34)", backdropFilter: "blur(8px)" }}
     >
       <div
         className="w-full max-w-xs mx-4 flex flex-col rounded-3xl shadow-2xl overflow-hidden"
-        style={{ background: "#fff", animation: "unlockPop 0.32s cubic-bezier(.34,1.56,.64,1) both" }}
+        style={{
+          background: "#FFF8EA",
+          border: "1px solid rgba(210,156,76,0.38)",
+          animation: "unlockPop 0.32s cubic-bezier(.34,1.56,.64,1) both",
+        }}
       >
         {/* ── 상단 glow 헤더 */}
         <div
           className="flex flex-col items-center pt-7 pb-5 px-5 gap-1"
-          style={{ background: `radial-gradient(ellipse at 50% 0%, ${theme.glow} 0%, #fff 70%)` }}
+          style={{ background: `radial-gradient(ellipse at 50% 0%, ${theme.glow} 0%, #FFF8EA 70%)` }}
         >
           <span style={{ fontSize: 40, lineHeight: 1 }}>{TITLE_EMOJI[group]}</span>
           <h2 className="text-lg font-black text-center mt-1" style={{ color: "#1a1a2e", letterSpacing: "-0.3px" }}>
