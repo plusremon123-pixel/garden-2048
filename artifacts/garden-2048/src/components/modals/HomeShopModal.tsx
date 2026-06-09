@@ -15,6 +15,7 @@ import {
 import type { PlayerData } from "@/utils/playerData";
 import { SEASON_BG, type Season } from "@/utils/seasonData";
 import { SEASON_THEMES, type SeasonTheme } from "@/utils/seasonTheme";
+import { assetUrl } from "@/utils/assets";
 import { useTranslation } from "@/i18n";
 
 interface HomeShopModalProps {
@@ -81,7 +82,7 @@ export function HomeShopModal({
         style={{ borderBottom: `1px solid ${theme.borderColor}40` }}
       >
         <div className="flex items-center gap-2 flex-1">
-          <img src="/menu-shop.png" className="w-6 h-6 object-contain" alt="" draggable={false} />
+          <img src={assetUrl("/menu-shop.png")} className="w-6 h-6 object-contain" alt="" draggable={false} />
           <h2 className="text-base font-bold" style={{ color: theme.textPrimary }}>{t("shop.title")}</h2>
         </div>
         <button

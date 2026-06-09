@@ -23,6 +23,7 @@ import {
   SEASON_PULSE_COLOR,
 } from "@/utils/seasonData";
 import { SEASON_THEMES, type SeasonTheme } from "@/utils/seasonTheme";
+import { assetUrl }              from "@/utils/assets";
 import { SeasonTransition }       from "./modals/SeasonTransition";
 import { ItemsModal }             from "./modals/ItemsModal";
 import { CardCollectionModal }    from "./modals/CardCollectionModal";
@@ -247,15 +248,15 @@ export function FrontScreen({
    */
   const mp = SEASON_MENU_PALETTE[season];
   const leftMenuItems: MenuItemDef[] = [
-    { key: "mission",  x:  37, y: 166, iconPng: "/menu-mission.png",  bgColor: mp.bg, textColor: mp.text, shadowColor: mp.shadow },
-    { key: "card",     x:  37, y: 379, iconPng: "/menu-card.png",     bgColor: mp.bg, textColor: mp.text, shadowColor: mp.shadow },
-    { key: "infinite", x:  37, y: 592, iconPng: "/menu-infinite.png", bgColor: mp.bg, textColor: mp.text, shadowColor: mp.shadow },
+    { key: "mission",  x:  37, y: 166, iconPng: assetUrl("/menu-mission.png"),  bgColor: mp.bg, textColor: mp.text, shadowColor: mp.shadow },
+    { key: "card",     x:  37, y: 379, iconPng: assetUrl("/menu-card.png"),     bgColor: mp.bg, textColor: mp.text, shadowColor: mp.shadow },
+    { key: "infinite", x:  37, y: 592, iconPng: assetUrl("/menu-infinite.png"), bgColor: mp.bg, textColor: mp.text, shadowColor: mp.shadow },
   ];
   const rightMenuItems: MenuItemDef[] = [
-    { key: "shop",     x: 906, y: 166, iconPng: "/menu-shop.png",     bgColor: mp.bg, textColor: mp.text, shadowColor: mp.shadow },
-    { key: "settings", x: 906, y: 379, iconPng: "/menu-settings.png", bgColor: mp.bg, textColor: mp.text, shadowColor: mp.shadow },
+    { key: "shop",     x: 906, y: 166, iconPng: assetUrl("/menu-shop.png"),     bgColor: mp.bg, textColor: mp.text, shadowColor: mp.shadow },
+    { key: "settings", x: 906, y: 379, iconPng: assetUrl("/menu-settings.png"), bgColor: mp.bg, textColor: mp.text, shadowColor: mp.shadow },
     ...(!isPremiumActive ? [
-      { key: "subscribe", x: 906, y: 592, iconPng: "/menu-subscribe.png", bgColor: "#FFAE00", textColor: "#6D1D00", shadowColor: "rgba(239,120,0,0.65)" },
+      { key: "subscribe", x: 906, y: 592, iconPng: assetUrl("/menu-subscribe.png"), bgColor: "#FFAE00", textColor: "#6D1D00", shadowColor: "rgba(239,120,0,0.65)" },
     ] : []),
   ];
 
@@ -525,7 +526,7 @@ function HomeTitle({ bg, season }: { bg: BgLayout; season: Season }) {
   const w = 344 * scaleX * 1.2;
   return (
     <img
-      src="/title.svg"
+      src={assetUrl("/title.svg")}
       alt="Garden 2048"
       draggable={false}
       style={{
@@ -919,37 +920,37 @@ function HomeStageMap({
  * ============================================================ */
 const NODE_ASSETS: Record<Season, Record<NodeStatus, string>> = {
   spring: {
-    done:      "/nodes/map/spring-complete.png",
-    current:   "/nodes/map/spring-playing.png",
-    available: "/nodes/map/spring-before.png",
-    locked:    "/nodes/map/spring-before.png",
+    done:      assetUrl("/nodes/map/spring-complete.png"),
+    current:   assetUrl("/nodes/map/spring-playing.png"),
+    available: assetUrl("/nodes/map/spring-before.png"),
+    locked:    assetUrl("/nodes/map/spring-before.png"),
   },
   summer: {
-    done:      "/nodes/map/summer-complete.png",
-    current:   "/nodes/map/summer-playing.png",
-    available: "/nodes/map/summer-before.png",
-    locked:    "/nodes/map/summer-before.png",
+    done:      assetUrl("/nodes/map/summer-complete.png"),
+    current:   assetUrl("/nodes/map/summer-playing.png"),
+    available: assetUrl("/nodes/map/summer-before.png"),
+    locked:    assetUrl("/nodes/map/summer-before.png"),
   },
   autumn: {
-    done:      "/nodes/map/autumn-complete.png",
-    current:   "/nodes/map/autumn-playing.png",
-    available: "/nodes/map/autumn-before.png",
-    locked:    "/nodes/map/autumn-before.png",
+    done:      assetUrl("/nodes/map/autumn-complete.png"),
+    current:   assetUrl("/nodes/map/autumn-playing.png"),
+    available: assetUrl("/nodes/map/autumn-before.png"),
+    locked:    assetUrl("/nodes/map/autumn-before.png"),
   },
   winter: {
-    done:      "/nodes/map/winter-complete.png",
-    current:   "/nodes/map/winter-playing.png",
-    available: "/nodes/map/winter-before.png",
-    locked:    "/nodes/map/winter-before.png",
+    done:      assetUrl("/nodes/map/winter-complete.png"),
+    current:   assetUrl("/nodes/map/winter-playing.png"),
+    available: assetUrl("/nodes/map/winter-before.png"),
+    locked:    assetUrl("/nodes/map/winter-before.png"),
   },
 };
 
 const NODE_WAVE_FRAMES: Partial<Record<Season, string[]>> = {
   spring: [
-    "/nodes/map/animated/spring-playing-wave-1.png",
-    "/nodes/map/animated/spring-playing-wave-2.png",
-    "/nodes/map/animated/spring-playing-wave-3.png",
-    "/nodes/map/animated/spring-playing-wave-4.png",
+    assetUrl("/nodes/map/animated/spring-playing-wave-1.png"),
+    assetUrl("/nodes/map/animated/spring-playing-wave-2.png"),
+    assetUrl("/nodes/map/animated/spring-playing-wave-3.png"),
+    assetUrl("/nodes/map/animated/spring-playing-wave-4.png"),
   ],
 };
 
@@ -1156,7 +1157,7 @@ function StartButton({ bg, season, onClick }: { bg: BgLayout; season: Season; on
       }}
     >
       <img
-        src="/start_button.svg"
+        src={assetUrl("/start_button.svg")}
         alt="START"
         draggable={false}
         style={{
@@ -1207,7 +1208,7 @@ function MissionModal({ missions, weeklyMissions, onClaimDaily, onClaimWeekly, o
           style={{ borderBottom: `1px solid ${theme.borderColor}50` }}
         >
           <h2 className="text-lg font-display font-bold flex items-center gap-1.5" style={{ color: theme.textPrimary }}>
-            <img src="/menu-mission.png" className="w-6 h-6 object-contain" alt="" draggable={false} />
+            <img src={assetUrl("/menu-mission.png")} className="w-6 h-6 object-contain" alt="" draggable={false} />
             {t("missions.title")}
           </h2>
           <button

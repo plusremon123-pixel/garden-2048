@@ -10,6 +10,7 @@
 
 import { useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
+import { assetUrl } from "@/utils/assets";
 
 interface SplashScreenProps {
   onDone: () => void;
@@ -110,7 +111,7 @@ export function SplashScreen({ onDone }: SplashScreenProps) {
         }}
       >
         <img
-          src="/title.svg"
+          src={assetUrl("/title.svg")}
           alt="Garden 2048"
           style={{
             width: "220px",

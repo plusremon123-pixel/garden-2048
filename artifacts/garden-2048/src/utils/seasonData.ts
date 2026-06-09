@@ -4,6 +4,8 @@
  * 이 파일 한 곳에서 계절 관련 모든 상수를 관리한다.
  * ============================================================ */
 
+import { assetUrl } from "./assets";
+
 export type Season = "spring" | "summer" | "autumn" | "winter";
 
 /**
@@ -32,10 +34,10 @@ export function getSeason(stage: number): Season {
 
 /** 계절별 홈/게임 배경 PNG 경로 */
 export const SEASON_BG: Record<Season, string> = {
-  spring: "/maps/wide10-spring-1120.png",
-  summer: "/maps/wide10-summer-1120.png",
-  autumn: "/maps/wide10-autumn-1120.png",
-  winter: "/maps/wide10-winter-1120.png",
+  spring: assetUrl("/maps/wide10-spring-1120.png"),
+  summer: assetUrl("/maps/wide10-summer-1120.png"),
+  autumn: assetUrl("/maps/wide10-autumn-1120.png"),
+  winter: assetUrl("/maps/wide10-winter-1120.png"),
 };
 
 /**

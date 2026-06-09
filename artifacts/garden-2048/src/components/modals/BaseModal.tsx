@@ -7,6 +7,7 @@ import { ReactNode, useEffect } from "react";
 import { createPortal } from "react-dom";
 import type { Season } from "@/utils/seasonData";
 import { SEASON_THEMES } from "@/utils/seasonTheme";
+import { assetUrl } from "@/utils/assets";
 
 interface BaseModalProps {
   icon?:            string;
@@ -77,7 +78,7 @@ export function BaseModal({
         >
           <div className="flex-1 flex items-center gap-2">
             {iconSrc
-              ? <img src={iconSrc} className="w-7 h-7 object-contain" alt="" draggable={false} />
+              ? <img src={assetUrl(iconSrc)} className="w-7 h-7 object-contain" alt="" draggable={false} />
               : icon && <span className="text-xl leading-none">{icon}</span>
             }
             <h2 className="text-base font-bold" style={{ color: theme.textPrimary }}>{title}</h2>

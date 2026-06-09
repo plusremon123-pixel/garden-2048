@@ -7,6 +7,7 @@ import { createPortal } from "react-dom";
 import { useTranslation } from "@/i18n";
 import type { Season } from "@/utils/seasonData";
 import { SEASON_THEMES } from "@/utils/seasonTheme";
+import { assetUrl } from "@/utils/assets";
 
 interface FreeTrialModalProps {
   onStart: () => void;
@@ -36,7 +37,7 @@ export function FreeTrialModal({ onStart, onClose, season = "spring" }: FreeTria
           style={{ background: theme.panelColor }}
         >
           <div className="flex justify-center mb-2">
-            <img src="/menu-subscribe.png" className="w-12 h-12 object-contain" alt="" draggable={false} />
+            <img src={assetUrl("/menu-subscribe.png")} className="w-12 h-12 object-contain" alt="" draggable={false} />
           </div>
           <h2 className="text-lg font-black" style={{ color: theme.textPrimary }}>{t("premium.freeTrial")}</h2>
           <p className="text-xs mt-1" style={{ color: theme.textSecondary }}>{t("premium.freeTrialSub")}</p>

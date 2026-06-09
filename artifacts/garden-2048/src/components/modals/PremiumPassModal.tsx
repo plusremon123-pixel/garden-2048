@@ -8,6 +8,7 @@ import { useTranslation } from "@/i18n";
 import type { Season } from "@/utils/seasonData";
 import { SEASON_THEMES } from "@/utils/seasonTheme";
 import type { SubscriptionState } from "@/utils/subscriptionData";
+import { assetUrl } from "@/utils/assets";
 
 interface PremiumPassModalProps {
   isPostTrial?:       boolean;
@@ -66,7 +67,7 @@ export function PremiumPassModal({
           style={{ background: theme.panelColor }}
         >
           <div className="flex justify-center mb-2">
-            <img src="/menu-subscribe.png" className="w-12 h-12 object-contain" alt="" draggable={false} />
+            <img src={assetUrl("/menu-subscribe.png")} className="w-12 h-12 object-contain" alt="" draggable={false} />
           </div>
           <h2 className="text-lg font-black" style={{ color: theme.textPrimary }}>
             {isActive ? t("premium.activeTitle") : t("premium.title")}

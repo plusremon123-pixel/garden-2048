@@ -8,6 +8,7 @@ import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "@/i18n";
 import { SEASON_BG } from "@/utils/seasonData";
+import { assetUrl } from "@/utils/assets";
 
 interface TutorialModalProps { onDone: () => void; }
 
@@ -20,8 +21,8 @@ const TXT   = "#3D2000";
 const MUTED = "#9C7A52";
 const GLASS = "rgba(255,255,255,0.72)";
 const TUTORIAL_BG = SEASON_BG.spring;
-const GARDEN_BED_IMAGE = "/tutorial/garden-bed.png";
-const GARDEN_BLOOM_IMAGE = "/tutorial/garden-bloom.png";
+const GARDEN_BED_IMAGE = assetUrl("/tutorial/garden-bed.png");
+const GARDEN_BLOOM_IMAGE = assetUrl("/tutorial/garden-bloom.png");
 
 /* ============================================================
  * 일러스트 컴포넌트들

@@ -9,6 +9,7 @@ import { type PlayerData }   from "@/utils/playerData";
 import { type SubscriptionState, isPremiumActive } from "@/utils/subscriptionData";
 import type { Season } from "@/utils/seasonData";
 import { SEASON_THEMES } from "@/utils/seasonTheme";
+import { assetUrl } from "@/utils/assets";
 import { useTranslation } from "@/i18n";
 
 interface CardCollectionModalProps {
@@ -234,7 +235,7 @@ export function CardCollectionModal({ player, subscriptionState, onClose, onOpen
         style={{ borderBottom: `1px solid ${theme.borderColor}50` }}
       >
         <div className="flex items-center gap-2 flex-1">
-          <img src="/menu-card.png" className="w-7 h-7 object-contain" alt="" draggable={false} />
+          <img src={assetUrl("/menu-card.png")} className="w-7 h-7 object-contain" alt="" draggable={false} />
           <h2 className="text-base font-bold" style={{ color: theme.textPrimary }}>{t("cardCollection.title")}</h2>
         </div>
         <button
