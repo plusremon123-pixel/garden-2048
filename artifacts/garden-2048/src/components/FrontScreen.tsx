@@ -54,23 +54,25 @@ type StageNodeTemplate = {
   stage:   number;
   cx:      number;
   cy:      number;
+  rx:      number;
+  ry:      number;
   offsetX?: number;
   offsetY?: number;
 };
 
-/* 10개 노드 — 넓은 단일 S자 길 중앙 기준 center anchor */
+/* 10개 노드 — 사용자 지정 SVG ellipse 중심 기준 */
 /* stage 진행 방향: 위 → 아래 */
 const STAGE_NODE_TEMPLATES: StageNodeTemplate[] = [
-  { stage:  1, cx:  575, cy:  455 },
-  { stage:  2, cx:  535, cy:  610 },
-  { stage:  3, cx:  600, cy:  770 },
-  { stage:  4, cx:  565, cy:  930 },
-  { stage:  5, cx:  610, cy: 1085 },
-  { stage:  6, cx:  675, cy: 1235 },
-  { stage:  7, cx:  610, cy: 1375 },
-  { stage:  8, cx:  545, cy: 1510 },
-  { stage:  9, cx:  575, cy: 1635 },
-  { stage: 10, cx:  620, cy: 1760 },
+  { stage:  1, cx: 487,   cy:  512,   rx: 54,   ry: 29 },
+  { stage:  2, cx: 617.5, cy:  621.5, rx: 56.5, ry: 30.5 },
+  { stage:  3, cx: 541.5, cy:  752,   rx: 65.5, ry: 35 },
+  { stage:  4, cx: 426,   cy:  855,   rx: 67,   ry: 36 },
+  { stage:  5, cx: 572,   cy:  959,   rx: 67,   ry: 36 },
+  { stage:  6, cx: 694,   cy: 1096,   rx: 67,   ry: 36 },
+  { stage:  7, cx: 795.5, cy: 1260,   rx: 74.5, ry: 40 },
+  { stage:  8, cx: 674,   cy: 1394.5, rx: 77,   ry: 41.5 },
+  { stage:  9, cx: 483.5, cy: 1499.5, rx: 88.5, ry: 47.5 },
+  { stage: 10, cx: 510,   cy: 1664,   rx: 97,   ry: 49 },
 ];
 
 const LEVELS_PER_PAGE = 10;
@@ -103,13 +105,9 @@ const SEASON_MENU_PALETTE: Record<Season, { bg: string; text: string; shadow: st
  *  원본 SVG 황금/앰버(hue≈38°) 기준 계절 보정
  */
 const SEASON_START_FILTER: Record<Season, string> = {
-  // 봄: 원본 골드 거의 그대로
   spring: "saturate(1.05) brightness(1.03)",
-  // 여름: 밝고 따뜻한 골드 유지
   summer: "saturate(1.15) brightness(1.06)",
-  // 가을: 더 진한 주황-빨강
   autumn: "hue-rotate(-25deg) saturate(1.40) brightness(0.95)",
-  // 겨울: 쿨 블루
   winter: "hue-rotate(175deg) saturate(0.80) brightness(1.10)",
 };
 
@@ -565,24 +563,21 @@ function TopHudBar({ player, season }: { player: PlayerData; season: Season }) {
   const filled    = Math.min(lives, MAX_SLOTS);
   const bonus     = Math.max(0, lives - MAX_SLOTS);
 
-  /* ── 계절별 그라디언트 색상 ── */
-  const barGradient: Record<Season, string> = {
-    spring: "linear-gradient(180deg, #FFF5E4F5 0%, #FDF0D8E8 100%)",
-    summer: "linear-gradient(180deg, #FFFDE7F5 0%, #FFF9C4E8 100%)",
-    autumn: "linear-gradient(180deg, #FFF3E0F5 0%, #FFE0B2E8 100%)",
-    winter: "linear-gradient(180deg, #E3F2FDF5 0%, #BBDEFBE8 100%)",
+  const frameTone: Record<Season, { line: string; shadow: string; shine: string }> = {
+    spring: { line: "#D5A968", shadow: "rgba(96,58,18,0.18)", shine: "rgba(255,250,238,0.94)" },
+    summer: { line: "#D8B34E", shadow: "rgba(104,78,12,0.18)", shine: "rgba(255,253,226,0.94)" },
+    autumn: { line: "#C98545", shadow: "rgba(112,50,13,0.20)", shine: "rgba(255,244,225,0.94)" },
+    winter: { line: "#AFC7D8", shadow: "rgba(39,76,105,0.16)", shine: "rgba(246,252,255,0.94)" },
   };
-  const borderColor: Record<Season, string> = {
-    spring: "#D4AC6080",
-    summer: "#F9A82580",
-    autumn: "#E65100AA",
-    winter: "#1565C066",
-  };
-  const shadowColor: Record<Season, string> = {
-    spring: "rgba(180,130,60,0.18)",
-    summer: "rgba(200,150,0,0.20)",
-    autumn: "rgba(180,80,0,0.22)",
-    winter: "rgba(20,80,160,0.16)",
+  const tone = frameTone[season];
+  const pillStyle: React.CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    minHeight: 36,
+    borderRadius: 9999,
+    background: `linear-gradient(180deg, ${tone.shine} 0%, ${palette.bg}E8 100%)`,
+    border: `1.5px solid ${tone.line}AA`,
+    boxShadow: `0 5px 12px ${tone.shadow}, inset 0 2px 0 rgba(255,255,255,0.72), inset 0 -2px 0 rgba(126,79,28,0.10)`,
   };
 
   return (
@@ -596,12 +591,8 @@ function TopHudBar({ player, season }: { player: PlayerData; season: Season }) {
         pointerEvents:       "none",
         /* safe-area — iPhone 노치/다이나믹 아일랜드 */
         paddingTop:          "env(safe-area-inset-top, 0px)",
-        background:          barGradient[season],
-        backdropFilter:      "blur(14px)",
-        WebkitBackdropFilter:"blur(14px)",
-        borderBottom:        `2.5px solid ${borderColor[season]}`,
-        boxShadow:           `0 4px 20px ${shadowColor[season]}`,
-        transition:          "background 0.6s ease, border-color 0.6s ease",
+        background:          "linear-gradient(180deg, rgba(255,250,236,0.72), rgba(255,250,236,0.18) 72%, transparent)",
+        transition:          "background 0.6s ease",
       }}
     >
       {/* 내부 행: 좌(생명력) — 우(코인) */}
@@ -610,7 +601,7 @@ function TopHudBar({ player, season }: { player: PlayerData; season: Season }) {
           display:         "flex",
           alignItems:      "center",
           justifyContent:  "space-between",
-          padding:         "9px 16px 9px",
+          padding:         "10px 16px 8px",
           gap:             8,
         }}
       >
@@ -619,16 +610,13 @@ function TopHudBar({ player, season }: { player: PlayerData; season: Season }) {
             overflow:hidden 으로 pill 밖으로 절대 나가지 않음 */}
         <div
           style={{
+            ...pillStyle,
             display:       "flex",
             alignItems:    "center",
             flexWrap:      "nowrap",
             overflow:      "hidden",
-            gap:           0,
-            background:    palette.bg + "CC",
-            borderRadius:  9999,
-            padding:       "5px 10px",
-            border:        `1.5px solid ${palette.text}30`,
-            boxShadow:     "inset 0 1px 0 rgba(255,255,255,0.55), 0 1px 4px rgba(0,0,0,0.08)",
+            gap:           3,
+            padding:       "5px 12px 5px 11px",
           }}
         >
           {/* 하트 슬롯 5칸 */}
@@ -636,14 +624,20 @@ function TopHudBar({ player, season }: { player: PlayerData; season: Season }) {
             <span
               key={i}
               style={{
-                fontSize:   "clamp(14px, 4vw, 19px)",
+                width:      "clamp(15px, 4.2vw, 20px)",
+                height:     "clamp(15px, 4.2vw, 20px)",
+                display:    "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize:   "clamp(14px, 4vw, 18px)",
                 lineHeight: 1,
-                opacity:    i < filled ? 1 : 0.22,
-                filter:     i < filled ? "drop-shadow(0 1px 2px rgba(220,50,50,0.35))" : "none",
+                color:      i < filled ? "#F43F5E" : "rgba(140,98,62,0.20)",
+                textShadow: i < filled ? "0 2px 0 #C81E44, 0 3px 7px rgba(196,24,70,0.32), 0 -1px 0 rgba(255,255,255,0.72)" : "none",
+                filter:     i < filled ? "drop-shadow(0 1px 1px rgba(104,38,28,0.24))" : "none",
                 transition: "opacity 0.3s",
                 flexShrink: 0,
               }}
-            >❤️</span>
+            >♥</span>
           ))}
           {/* 생명력 수 — 항상 pill 안에 표시 (lives > 5 이면 +N, 이하면 총 수) */}
           <span
@@ -653,9 +647,10 @@ function TopHudBar({ player, season }: { player: PlayerData; season: Season }) {
               color:         palette.text,
               lineHeight:    1,
               marginLeft:    5,
-              letterSpacing: "-0.3px",
+              letterSpacing: 0,
               flexShrink:    0,
               whiteSpace:    "nowrap",
+              textShadow:    "0 1px 0 rgba(255,255,255,0.74)",
             }}
           >{`+${bonus > 0 ? bonus : lives}`}</span>
         </div>
@@ -663,24 +658,40 @@ function TopHudBar({ player, season }: { player: PlayerData; season: Season }) {
         {/* ── 코인 필 ───────────────────────────────────────── */}
         <div
           style={{
+            ...pillStyle,
             display:       "flex",
             alignItems:    "center",
-            gap:           6,
-            background:    palette.bg + "CC",
-            borderRadius:  9999,
-            padding:       "5px 14px 5px 10px",
-            border:        `1.5px solid ${palette.text}30`,
-            boxShadow:     "inset 0 1px 0 rgba(255,255,255,0.55), 0 1px 4px rgba(0,0,0,0.08)",
+            gap:           8,
+            padding:       "5px 15px 5px 8px",
           }}
         >
-          <span style={{ fontSize: "clamp(15px, 4.5vw, 20px)", lineHeight: 1 }}>🪙</span>
+          <span
+            style={{
+              width:      "clamp(22px, 5.6vw, 28px)",
+              height:     "clamp(22px, 5.6vw, 28px)",
+              borderRadius: "50%",
+              display:    "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "radial-gradient(circle at 34% 26%, #FFF6A8 0%, #FCD34D 34%, #E9A51B 68%, #B96B12 100%)",
+              border:    "1.5px solid #B96B12",
+              boxShadow: "inset 0 2px 0 rgba(255,255,255,0.56), inset 0 -2px 0 rgba(121,62,10,0.22), 0 2px 4px rgba(111,62,10,0.24)",
+              color:     "#9A4F0B",
+              fontSize:  "clamp(12px, 3.3vw, 16px)",
+              fontWeight: 900,
+              lineHeight: 1,
+              flexShrink: 0,
+              textShadow: "0 1px 0 rgba(255,255,255,0.55)",
+            }}
+          >₩</span>
           <span
             style={{
               fontSize:      "clamp(13px, 3.8vw, 17px)",
-              fontWeight:    800,
+              fontWeight:    900,
               color:         palette.text,
               lineHeight:    1,
-              letterSpacing: "-0.4px",
+              letterSpacing: 0,
+              textShadow:    "0 1px 0 rgba(255,255,255,0.74)",
             }}
           >
             {player.coins.toLocaleString()}
@@ -709,8 +720,6 @@ function HomeMenuButton({ item, label, badge, bg, onClick }: HomeMenuButtonProps
   const cardVisH   = 173 * scaleX;  // 시각적 카드 높이
   const cardH      = 179 * scaleX;  // 버튼 전체 높이 (그림자 포함)
   const cornerR    = 30 * scaleX;
-  // SVG 참고: 라벨 영역 ~48px (카드 125px 지점부터 173px 까지)
-  const labelH     = 48 * scaleX;
 
   const screenPad  = 6;
   const isLeftMenu = item.x < DESIGN_W / 2;
@@ -720,7 +729,10 @@ function HomeMenuButton({ item, label, badge, bg, onClick }: HomeMenuButtonProps
 
   // 3D 카드 하단 쉐도우: item.shadowColor 우선, 없으면 기존 fallback
   const shadowColor = item.shadowColor ?? "rgba(197,154,104,1.0)";
-  const cardShadow = `0 6px 0 ${shadowColor}, 0 10px 18px rgba(0,0,0,0.13)`;
+  const cardShadow = `0 ${6 * scaleX}px 0 ${shadowColor}, 0 ${12 * scaleX}px ${20 * scaleX}px rgba(57,30,9,0.20), inset 0 2px 0 rgba(255,255,255,0.70)`;
+  const accentShadow = item.key === "premium"
+    ? "inset 0 -10px 16px rgba(255,151,0,0.38)"
+    : "inset 0 -10px 16px rgba(196,142,72,0.13)";
 
   return (
     <button
@@ -774,36 +786,58 @@ function HomeMenuButton({ item, label, badge, bg, onClick }: HomeMenuButtonProps
         overflow:        "hidden",
         display:         "flex",
         flexDirection:   "column",
-        justifyContent:  "space-between",
+        justifyContent:  "center",
         alignItems:      "center",
-        paddingTop:      18.5 * scaleX,
-        paddingBottom:   18.5 * scaleX,
+        gap:             8 * scaleX,
+        paddingTop:      15 * scaleX,
+        paddingBottom:   14 * scaleX,
         boxShadow:       cardShadow,
-        background:      item.bgColor,
+        border:          `${Math.max(1, 2 * scaleX)}px solid rgba(124,75,28,0.22)`,
+        background:      `linear-gradient(180deg, rgba(255,251,232,0.96) 0%, ${item.bgColor} 72%, ${item.bgColor} 100%)`,
+        outline:         `${Math.max(1, 1.5 * scaleX)}px solid rgba(255,255,255,0.52)`,
+        outlineOffset:   -5 * scaleX,
+        ...({ boxShadow: `${cardShadow}, ${accentShadow}` } as React.CSSProperties),
       }}>
-        {/* 아이콘 */}
-        <img
-          src={item.iconPng}
-          alt=""
-          draggable={false}
+        {/* 아이콘 웰 */}
+        <span
           style={{
-            width:     90 * scaleX,
-            height:    90 * scaleX,
-            objectFit: "contain",
-            flexShrink: 0,
+            width:           94 * scaleX,
+            height:          86 * scaleX,
+            borderRadius:    24 * scaleX,
+            display:         "flex",
+            alignItems:      "center",
+            justifyContent:  "center",
+            background:      "radial-gradient(circle at 45% 30%, rgba(255,255,255,0.92) 0%, rgba(255,245,215,0.56) 58%, rgba(142,87,39,0.12) 100%)",
+            border:          "1px solid rgba(128,79,31,0.18)",
+            boxShadow:       "inset 0 2px 0 rgba(255,255,255,0.70), 0 2px 4px rgba(75,45,18,0.10)",
+            flexShrink:      0,
           }}
-        />
+        >
+          <img
+            src={item.iconPng}
+            alt=""
+            draggable={false}
+            style={{
+              width:     78 * scaleX,
+              height:    78 * scaleX,
+              objectFit: "contain",
+              flexShrink: 0,
+              filter:    "drop-shadow(0 3px 3px rgba(82,42,14,0.18))",
+            }}
+          />
+        </span>
 
         {/* 라벨 */}
         <span style={{
           fontSize:      Math.max(12, 30 * scaleX),
-          fontWeight:    700,
+          fontWeight:    800,
           color:         item.textColor,
           lineHeight:    1,
           textAlign:     "center",
           whiteSpace:    "nowrap",
-          letterSpacing: "-0.3px",
+          letterSpacing: 0,
           flexShrink:    0,
+          textShadow:    "0 1px 0 rgba(255,255,255,0.70)",
         }}>
           {label}
         </span>
@@ -903,6 +937,8 @@ function HomeStageMap({
                     x={rx}
                     y={ry}
                     scaleX={scaleX}
+                    nodeScale={tmpl.rx / 74.5}
+                    depth={tmpl.stage}
                     onClick={() => onSelectLevel(level)}
                   />
                 );
@@ -965,10 +1001,12 @@ interface StageNodeProps {
   x:       number;
   y:       number;
   scaleX:  number;
+  nodeScale: number;
+  depth:   number;
   onClick: () => void;
 }
 
-function StageNode({ level, status, season, x, y, scaleX, onClick }: StageNodeProps) {
+function StageNode({ level, status, season, x, y, scaleX, nodeScale, depth, onClick }: StageNodeProps) {
   const isDone      = status === "done";
   const isCurrent   = status === "current";
   const isLocked    = status === "locked";
@@ -976,7 +1014,7 @@ function StageNode({ level, status, season, x, y, scaleX, onClick }: StageNodePr
   const [isWaving, setIsWaving] = useState(false);
   const [waveFrame, setWaveFrame] = useState(0);
 
-  const nodeSize = (isCurrent ? 168 : 148) * scaleX;
+  const nodeSize = (isCurrent ? 168 : 148) * scaleX * nodeScale;
   const nodeWidth = nodeSize;
   const nodeHeight = nodeSize;
 
@@ -1005,51 +1043,11 @@ function StageNode({ level, status, season, x, y, scaleX, onClick }: StageNodePr
         left:          x,          // ← 절대 변경 금지
         top:           y,          // ← 절대 변경 금지
         width:         nodeWidth,  // ← 절대 변경 금지
-        transform:     "translate(-50%, -50%)",  // ← 절대 변경 금지
+        transform:     "translate(-50%, -50%)",
         pointerEvents: isCurrent ? "auto" : "none",
-        zIndex:        isCurrent ? 7 : 6,
+        zIndex:        isCurrent ? 20 + depth : 10 + depth,
       }}
     >
-      {/* ── STAY 글로우 & 링 (outer div 기준 — float와 독립) ── */}
-      {isCurrent && (() => {
-        /* 링 공통 크기: 노드 너비 기준 원형 */
-        const ringSize = nodeWidth * 1.15;
-        const ringOff  = -ringSize / 2;
-        const ringBase: React.CSSProperties = {
-          position:      "absolute",
-          top:           "50%",
-          left:          "50%",
-          marginTop:     ringOff,
-          marginLeft:    ringOff,
-          width:         ringSize,
-          height:        ringSize,
-          borderRadius:  "50%",
-          pointerEvents: "none",
-          transformOrigin: "center",
-        };
-        return (
-          <>
-            {/* 1) 앰비언트 글로우 — 항상 보이는 부드러운 흰 원 */}
-            <div style={{
-              position:      "absolute",
-              top:           "50%",
-              left:          "50%",
-              marginTop:     -nodeWidth * 0.85,
-              marginLeft:    -nodeWidth * 0.85,
-              width:         nodeWidth * 1.7,
-              height:        nodeWidth * 1.7,
-              borderRadius:  "50%",
-              background:    "radial-gradient(circle, rgba(255,255,255,0.20) 0%, transparent 68%)",
-              pointerEvents: "none",
-            }} />
-            {/* 2) 링 A — 0s 시작, 1px→5px */}
-            <span style={{ ...ringBase, border: "1px solid rgba(255,255,255,0.7)", animation: "stayRingPulse 2.4s ease-out infinite" }} />
-            {/* 3) 링 B — 1.2s 지연, 1px→5px */}
-            <span style={{ ...ringBase, border: "1px solid rgba(255,255,255,0.7)", animation: "stayRingPulse 2.4s ease-out 1.2s infinite" }} />
-          </>
-        );
-      })()}
-
       {/* inner button — float 애니메이션은 여기에만 적용
           (outer div의 translate(-50%,-50%) 위치 기준을 보존하기 위함) */}
       <button
@@ -1079,8 +1077,8 @@ function StageNode({ level, status, season, x, y, scaleX, onClick }: StageNodePr
             width:      "100%",
             height:     nodeHeight,
             objectFit:  "contain",
-            opacity:    isLocked ? 0.52 : isAvailable ? 0.88 : 1,
-            filter:     isLocked ? "grayscale(0.35) saturate(0.72) brightness(0.92)" : undefined,
+            opacity:    1,
+            filter:     isLocked ? "grayscale(0.18) saturate(0.90) brightness(0.96)" : undefined,
           }}
         />
 
