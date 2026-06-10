@@ -131,6 +131,7 @@ export function EndlessDifficultyModal({
   };
 
   const bgUrl = SEASON_BG[season] ?? SEASON_BG.spring;
+  const selectedCfg = DIFF_CONFIG[selected];
 
   return (
     <div
@@ -142,66 +143,78 @@ export function EndlessDifficultyModal({
       <div
         className="absolute inset-0"
         style={{
-          backgroundImage: `linear-gradient(180deg, rgba(255,250,236,0.18), rgba(255,248,234,0.68)), url("${bgUrl}")`,
+          backgroundImage: `linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,248,226,0.32) 44%, rgba(255,238,183,0.74)), url("${bgUrl}")`,
           backgroundSize: "cover",
           backgroundPosition: "center top",
         }}
       />
 
-      {/* ── 상단 AD ───────────────────────────────────────── */}
-      <div
-        className="relative z-20 w-full h-10 flex-shrink-0 flex items-center justify-center text-[11px] font-medium select-none bg-white/55 backdrop-blur-sm text-foreground/30 border-b border-white/40"
-        aria-hidden="true"
-      >AD</div>
-
       {/* ── 헤더 ─────────────────────────────────────────── */}
       <div
         className="relative z-10 flex-shrink-0"
-        style={{ padding: "10px 16px 12px" }}
+        style={{ padding: "30px 18px 10px" }}
       >
-        {/* 뒤로가기 — 최소한 아이콘만 */}
         <button
           onClick={onClose}
           className="active:scale-90 transition-transform"
           style={{
-            position: "absolute", left: 16, top: 12,
-            width: 36, height: 36, borderRadius: 99,
+            position: "absolute", left: 18, top: 22,
+            width: 58, height: 58, borderRadius: 18,
             background: "linear-gradient(180deg, rgba(255,250,236,0.96), rgba(255,240,204,0.92))",
-            backdropFilter: "blur(10px)",
-            border: "1px solid rgba(210,156,76,0.38)",
+            border: "3px solid rgba(153,91,36,0.54)",
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 16, color: "#4C2E0C", cursor: "pointer",
-            boxShadow: "0 8px 18px rgba(96,58,18,0.14)",
+            fontSize: 33, color: "#7A4316", cursor: "pointer",
+            boxShadow: "0 7px 0 rgba(121,68,28,0.30), 0 13px 22px rgba(66,37,14,0.16), inset 0 2px 0 rgba(255,255,255,0.74)",
             zIndex: 2,
           }}
         >←</button>
 
-        {/* 타이틀 영역 */}
-        <div style={{
-          textAlign: "center",
-          paddingTop: 6,
-        }}>
+        <div
+          style={{
+            width: "min(74vw, 360px)",
+            margin: "72px auto 0",
+            padding: "16px 20px 20px",
+            borderRadius: 28,
+            textAlign: "center",
+            background: "linear-gradient(180deg, #C98234 0%, #A96324 48%, #7E4318 100%)",
+            border: "4px solid rgba(110,59,20,0.84)",
+            boxShadow: "0 10px 0 rgba(82,45,18,0.32), 0 18px 30px rgba(75,44,17,0.22), inset 0 4px 0 rgba(255,215,125,0.52)",
+            position: "relative",
+          }}
+        >
+          <span style={{ position: "absolute", top: -18, left: 18, fontSize: 27 }}>🌿</span>
+          <span style={{ position: "absolute", top: -18, right: 26, fontSize: 25 }}>🌼</span>
           <h1 style={{
-            fontSize: 28, fontWeight: 900, color: "#4C2E0C",
-            letterSpacing: "0.02em", lineHeight: 1,
-            textShadow: "0 2px 0 rgba(255,255,255,0.85)",
+            fontSize: "clamp(34px, 12vw, 58px)",
+            fontWeight: 900,
+            color: "#FFF7E5",
+            letterSpacing: 0,
+            lineHeight: 1,
+            textShadow: "0 4px 0 #6B3410, 0 7px 11px rgba(50,26,10,0.28)",
           }}>
             {t("endless.title")}
           </h1>
+        </div>
+
+        <div style={{ textAlign: "center" }}>
           <p style={{
-            fontSize: 13, fontWeight: 600, marginTop: 6,
-            color: "#8C6842",
-            letterSpacing: "0.01em",
+            display: "inline-block",
+            fontSize: 20,
+            fontWeight: 900,
+            marginTop: 18,
+            color: "#5E3514",
+            letterSpacing: 0,
+            textShadow: "0 2px 0 rgba(255,255,255,0.72)",
           }}>
-            {t("endless.selectDiff")}
+            {t("endless.selectDiff")} 🍃
           </p>
         </div>
       </div>
 
       {/* ── 카드 영역 (화면 중앙) ────────────────────────── */}
       <div
-        className="relative z-10 flex flex-col items-center flex-1 justify-center"
-        style={{ gap: 10, paddingBottom: btnLayout.containerH - btnLayout.top }}
+        className="relative z-10 flex flex-col items-center flex-1"
+        style={{ gap: 18, padding: "18px 18px 0", minHeight: 0 }}
       >
         {DIFF_ORDER.map((diff, i) => {
           const cfg   = ENDLESS_CONFIGS[diff];
@@ -215,15 +228,18 @@ export function EndlessDifficultyModal({
               onClick={() => setSelected(diff)}
               className="active:scale-[0.97]"
               style={{
-                width: "82%", maxWidth: 310,
-                borderRadius: 18,
-                padding: "14px 16px",
-                background: "linear-gradient(180deg, rgba(255,250,236,0.98), rgba(255,244,216,0.95))",
-                border: `2px solid ${isSel ? dc.selBorder : "rgba(210,156,76,0.25)"}`,
+                width: "min(84vw, 390px)",
+                minHeight: 118,
+                borderRadius: 30,
+                padding: "15px 20px",
+                background: isSel
+                  ? "linear-gradient(180deg, rgba(255,250,226,0.99), rgba(241,255,210,0.97))"
+                  : "linear-gradient(180deg, rgba(255,248,226,0.98), rgba(255,239,199,0.96))",
+                border: `4px solid ${isSel ? dc.selBorder : "rgba(210,156,76,0.56)"}`,
                 boxShadow: isSel
-                  ? dc.selShadow
-                  : "0 8px 20px rgba(96,58,18,0.13)",
-                display: "flex", alignItems: "center", gap: 14,
+                  ? `${dc.selShadow}, inset 0 3px 0 rgba(255,255,255,0.74)`
+                  : "0 8px 0 rgba(164,101,46,0.24), 0 16px 24px rgba(96,58,18,0.14), inset 0 3px 0 rgba(255,255,255,0.70)",
+                display: "flex", alignItems: "center", gap: 20,
                 textAlign: "left", cursor: "pointer",
                 transition: `border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.4s ease ${delay}s, transform 0.4s ease ${delay}s`,
                 opacity: visible ? 1 : 0,
@@ -232,10 +248,12 @@ export function EndlessDifficultyModal({
             >
               {/* 아이콘 원 */}
               <div style={{
-                width: 52, height: 52, borderRadius: 14, flexShrink: 0,
-                background: dc.iconBg,
+                width: 76, height: 76, borderRadius: 24, flexShrink: 0,
+                background: `radial-gradient(circle at 45% 28%, #FFFFFF 0%, ${dc.iconBg} 72%, rgba(128,82,36,0.14) 100%)`,
+                border: "2px solid rgba(126,77,32,0.18)",
+                boxShadow: "inset 0 2px 0 rgba(255,255,255,0.80), 0 3px 8px rgba(82,46,18,0.12)",
                 display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 26,
+                fontSize: 42,
               }}>
                 {dc.emoji}
               </div>
@@ -244,16 +262,25 @@ export function EndlessDifficultyModal({
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                   <span style={{
-                    fontSize: 18, fontWeight: 900,
-                    color: "#4C2E0C", lineHeight: 1,
+                    fontSize: 36,
+                    fontWeight: 900,
+                    color: dc.accent,
+                    lineHeight: 1,
+                    letterSpacing: 0,
+                    textShadow: "0 2px 0 rgba(255,255,255,0.76)",
                   }}>
                     {t(`endless.diff.${diff}`)}
                   </span>
                   {/* 난이도 태그 */}
                   <span style={{
-                    fontSize: 10, fontWeight: 700,
-                    background: dc.tagBg, color: dc.tagText,
-                    borderRadius: 999, padding: "2px 8px",
+                    fontSize: 19,
+                    fontWeight: 900,
+                    background: dc.tagBg,
+                    color: dc.tagText,
+                    border: `2px solid ${dc.selBorder}55`,
+                    borderRadius: 14,
+                    padding: "5px 14px",
+                    lineHeight: 1,
                   }}>
                     {cfg.boardSize}×{cfg.boardSize}
                   </span>
@@ -263,10 +290,13 @@ export function EndlessDifficultyModal({
               {/* 선택 체크 */}
               {isSel && (
                 <div style={{
-                  width: 24, height: 24, borderRadius: "50%", flexShrink: 0,
-                  background: dc.selBorder,
+                  width: 62, height: 62, borderRadius: "50%", flexShrink: 0,
+                  background: "linear-gradient(180deg, #9BDC45 0%, #5EAA1B 100%)",
+                  border: "4px solid rgba(67,122,12,0.54)",
+                  boxShadow: "0 5px 0 rgba(45,95,12,0.35), inset 0 2px 0 rgba(255,255,255,0.54)",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 13, fontWeight: 900, color: "#fff",
+                  fontSize: 36, fontWeight: 900, color: "#fff",
+                  textShadow: "0 2px 0 rgba(33,83,6,0.45)",
                 }}>✓</div>
               )}
             </button>
@@ -274,67 +304,89 @@ export function EndlessDifficultyModal({
         })}
       </div>
 
-      {/* ── START 버튼 — 선택 난이도 컬러 연동 ──────────── */}
-      {(() => {
-        const dc = DIFF_CONFIG[selected];
-        return (
-          <button
-            onClick={handleStartPress}
-            className="active:scale-[0.96]"
+      <div
+        className="relative z-20 flex-shrink-0"
+        style={{ padding: "18px 18px 18px" }}
+      >
+        <button
+          onClick={handleStartPress}
+          className="active:scale-[0.96]"
+          style={{
+            width: "min(84vw, 390px)",
+            height: 86,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            margin: "0 auto",
+            cursor: "pointer",
+            border: "4px solid rgba(255,241,179,0.90)",
+            padding: 0,
+            opacity: visible ? 1 : 0,
+            transition: "opacity 0.4s ease 0.35s, transform 0.15s ease",
+            borderRadius: 26,
+            background: selectedCfg.startBg,
+            boxShadow: "0 9px 0 rgba(169,84,8,0.46), 0 16px 26px rgba(122,65,9,0.25), inset 0 3px 0 rgba(255,255,255,0.56)",
+            animation: "endlessStartGlow 2.4s ease-in-out infinite",
+            overflow: "hidden",
+          }}
+        >
+          <span style={{
+            fontFamily: "var(--font-display)",
+            fontSize: 45,
+            fontWeight: 900,
+            color: "#fff",
+            letterSpacing: 0,
+            textShadow: "0 4px 0 rgba(118,55,9,0.55), 0 2px 12px rgba(0,0,0,0.20)",
+          }}>
+            START
+          </span>
+        </button>
+
+        {save && (
+          <div
             style={{
-              position:   "absolute",
-              left:       btnLayout.left,
-              top:        btnLayout.top,
-              width:      btnLayout.width * 1.45,
-              transform:  `translateX(-${(btnLayout.width * 1.45 - btnLayout.width) / 2}px)`,
-              zIndex:     20,
-              cursor:     "pointer",
-              border:     "none",
-              padding:    0,
-              opacity:    visible ? 1 : 0,
-              transition: "opacity 0.4s ease 0.35s, transform 0.15s ease",
-              borderRadius: 999,
-              background: dc.startBg,
-              backdropFilter: "blur(8px)",
-              boxShadow: `0 12px 24px rgba(182,104,10,0.28), inset 0 2px 0 rgba(255,255,255,0.55)`,
-              animation: "endlessStartGlow 2.4s ease-in-out infinite",
-              overflow:   "hidden",
+              width: "min(84vw, 390px)",
+              margin: "18px auto 0",
+              borderRadius: 22,
+              padding: "15px 18px",
+              background: "linear-gradient(180deg, rgba(255,248,229,0.96), rgba(255,238,201,0.96))",
+              border: "2px solid rgba(196,132,54,0.42)",
+              boxShadow: "0 7px 0 rgba(169,104,44,0.20), 0 14px 22px rgba(82,47,18,0.13), inset 0 2px 0 rgba(255,255,255,0.70)",
             }}
           >
-            {/* 광택 슬라이드 */}
-            <div style={{
-              position: "absolute", top: 0, bottom: 0,
-              width: "60%", borderRadius: "50%",
-              background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.32), transparent)",
-              animation: "endlessStartShine 3s ease-in-out infinite",
-              pointerEvents: "none",
-            }} />
-
-            {/* 내부 콘텐츠 */}
-            <div style={{
-              position:       "relative",
-              display:        "flex",
-              alignItems:     "center",
-              justifyContent: "center",
-              padding:        "13px 0",
-            }}>
-              <span style={{
-                fontSize:      18,
-                fontWeight:    900,
-                color:         "#fff",
-                letterSpacing: "0.08em",
-                textShadow:    "0 1px 6px rgba(0,0,0,0.4)",
-              }}>
-                Start
-              </span>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ fontSize: 34 }}>🌱</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 20, fontWeight: 900, color: "#5E3514", lineHeight: 1.15 }}>
+                  {t("endless.savedGame")}
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#9A7048", marginTop: 5 }}>
+                  {t(`endless.diff.${save.difficulty}`)} · {save.score.toLocaleString()}
+                </div>
+              </div>
+              <button
+                onClick={() => onContinue(save.difficulty)}
+                style={{
+                  padding: "11px 16px",
+                  borderRadius: 14,
+                  border: "2px solid rgba(67,122,12,0.42)",
+                  background: "linear-gradient(180deg, #A8DE4B 0%, #69AE21 100%)",
+                  color: "#fff",
+                  fontSize: 15,
+                  fontWeight: 900,
+                  boxShadow: "0 5px 0 rgba(48,98,13,0.35)",
+                }}
+              >
+                {t("endless.continue")}
+              </button>
             </div>
-          </button>
-        );
-      })()}
+          </div>
+        )}
+      </div>
 
       {/* ── 하단 AD ───────────────────────────────────────── */}
       <div
-        className="relative z-20 w-full h-10 flex-shrink-0 flex items-center justify-center text-[11px] font-medium select-none bg-white/55 backdrop-blur-sm text-foreground/30 border-t border-white/40"
+        className="relative z-20 w-full h-9 flex-shrink-0 flex items-center justify-center text-[11px] font-medium select-none bg-white/45 backdrop-blur-sm text-foreground/30 border-t border-white/40"
         aria-hidden="true"
       >AD</div>
 
