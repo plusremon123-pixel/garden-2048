@@ -957,7 +957,7 @@ function HomeStageMap({
 const NODE_ASSETS: Record<Season, Record<NodeStatus, string>> = {
   spring: {
     done:      assetUrl("/nodes/map/spring-complete.png"),
-    current:   assetUrl("/nodes/map/spring-playing.png"),
+    current:   assetUrl("/nodes/map/animated/spring-playing-wave-1.png"),
     available: assetUrl("/nodes/map/spring-before.png"),
     locked:    assetUrl("/nodes/map/spring-before.png"),
   },
@@ -1010,9 +1010,9 @@ function StageNode({ level, status, season, x, y, scaleX, nodeScale, depth, onCl
   const isDone      = status === "done";
   const isCurrent   = status === "current";
   const isLocked    = status === "locked";
-  const isAvailable = status === "available";
   const [isWaving, setIsWaving] = useState(false);
   const [waveFrame, setWaveFrame] = useState(0);
+  const waveTimersRef = useRef<number[]>([]);
 
   const nodeSize = (isCurrent ? 168 : 148) * scaleX * nodeScale;
   const nodeWidth = nodeSize;
@@ -1024,16 +1024,45 @@ function StageNode({ level, status, season, x, y, scaleX, nodeScale, depth, onCl
   const nodeAsset = isCurrent && isWaving && waveFrames
     ? waveFrames[waveFrame]
     : NODE_ASSETS[season]?.[status] ?? NODE_ASSETS.spring[status];
+
+  useEffect(() => {
+    setIsWaving(false);
+    setWaveFrame(0);
+    waveTimersRef.current.forEach((timerId) => window.clearTimeout(timerId));
+    waveTimersRef.current = [];
+
+    return () => {
+      waveTimersRef.current.forEach((timerId) => window.clearTimeout(timerId));
+      waveTimersRef.current = [];
+    };
+  }, [level, status, season]);
+
   const handleClick = () => {
     if (!isCurrent || isWaving) return;
     setIsWaving(true);
     setWaveFrame(0);
-    [1, 2, 3].forEach((frame) => {
-      window.setTimeout(() => setWaveFrame(frame), frame * 120);
+
+    waveTimersRef.current.forEach((timerId) => window.clearTimeout(timerId));
+    waveTimersRef.current = [];
+
+    const waveSequence = waveFrames
+      ? [1, 2, 3, 2, 1, 2, 3, 2, 1, 2, 3, 0]
+      : [0];
+
+    waveSequence.forEach((frame, index) => {
+      const timerId = window.setTimeout(() => {
+        setWaveFrame(frame);
+      }, (index + 1) * 110);
+      waveTimersRef.current.push(timerId);
     });
-    window.setTimeout(() => {
+
+    const enterTimerId = window.setTimeout(() => {
+      setIsWaving(false);
+      setWaveFrame(0);
+      waveTimersRef.current = [];
       onClick();
-    }, 560);
+    }, waveFrames ? (waveSequence.length + 1) * 110 : 180);
+    waveTimersRef.current.push(enterTimerId);
   };
 
   return (
@@ -1052,7 +1081,6 @@ function StageNode({ level, status, season, x, y, scaleX, nodeScale, depth, onCl
           (outer div의 translate(-50%,-50%) 위치 기준을 보존하기 위함) */}
       <button
         onClick={handleClick}
-        className={isCurrent ? "node-float" : undefined}
         style={{
           display:    "block",
           width:      "100%",
@@ -1061,9 +1089,6 @@ function StageNode({ level, status, season, x, y, scaleX, nodeScale, depth, onCl
           padding:    0,
           cursor:     isCurrent ? "pointer" : "default",
           position:   "relative",
-          animation:  isCurrent && !isWaving
-              ? "nodeCartApproach 2.6s ease-in-out infinite"
-              : undefined,
         }}
         aria-label={`스테이지 ${level}`}
       >
