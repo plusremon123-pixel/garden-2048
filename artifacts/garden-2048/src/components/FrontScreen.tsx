@@ -716,8 +716,8 @@ interface HomeMenuButtonProps {
 function HomeMenuButton({ item, label, badge, bg, onClick }: HomeMenuButtonProps) {
   const { rx, ry, scaleX } = toRenderPoint(item.x, item.y, bg);
   // SVG 원본: 카드 173×173 시각 영역 + 하단 6px 그림자 = 총 179px
-  const cardW      = 184 * scaleX;
-  const cardH      = 228 * scaleX;
+  const cardW      = 164 * scaleX;
+  const cardH      = 203 * scaleX;
 
   const screenPad  = 6;
   const isLeftMenu = item.x < DESIGN_W / 2;
@@ -788,7 +788,7 @@ function HomeMenuButton({ item, label, badge, bg, onClick }: HomeMenuButtonProps
         left:          "50%",
         bottom:        16 * scaleX,
         transform:     "translateX(-50%)",
-        fontSize:      Math.max(12, 30 * scaleX),
+        fontSize:      Math.max(11, 27 * scaleX),
         fontWeight:    900,
         color:         item.textColor,
         lineHeight:    1,
@@ -992,7 +992,7 @@ function StageNode({ level, status, season, x, y, scaleX, nodeScale, depth, onCl
   const [waveFrame, setWaveFrame] = useState(0);
   const waveTimersRef = useRef<number[]>([]);
 
-  const nodeSize = 220 * scaleX * nodeScale;
+  const nodeSize = 176 * scaleX * nodeScale;
   const nodeWidth = nodeSize;
   const nodeHeight = nodeSize;
 
