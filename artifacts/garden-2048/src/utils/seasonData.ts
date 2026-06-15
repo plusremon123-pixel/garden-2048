@@ -34,7 +34,7 @@ export function getSeason(stage: number): Season {
 
 /** 계절별 홈/게임 배경 PNG 경로 */
 export const SEASON_BG: Record<Season, string> = {
-  spring: assetUrl("/maps/wide10-spring-1120.png"),
+  spring: assetUrl("/maps/wide10-spring-final.png"),
   summer: assetUrl("/maps/wide10-summer-1120.png"),
   autumn: assetUrl("/maps/wide10-autumn-1120.png"),
   winter: assetUrl("/maps/wide10-winter-1120.png"),
@@ -48,9 +48,9 @@ export const SEASON_BG: Record<Season, string> = {
  */
 export const SEASON_NODE_FILTER: Record<Season, string> = {
   spring: "none",
-  summer: "saturate(1.18) brightness(1.06) hue-rotate(5deg)",
-  autumn: "sepia(0.38) hue-rotate(-18deg) saturate(1.22) brightness(0.96)",
-  winter: "saturate(0.52) hue-rotate(198deg) brightness(0.90)",
+  summer: "none",
+  autumn: "none",
+  winter: "none",
 };
 
 /**

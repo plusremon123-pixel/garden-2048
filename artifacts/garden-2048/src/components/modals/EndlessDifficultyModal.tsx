@@ -1,448 +1,517 @@
-/* ============================================================
- * EndlessDifficultyModal.tsx
- * 무한 게임 난이도 선택 — 계절 배경 + 나무 카드 스타일
- * ============================================================ */
-
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import {
   ENDLESS_CONFIGS,
   loadEndlessSave,
   type EndlessDifficulty,
 } from "@/utils/endlessModeData";
 import { useTranslation } from "@/i18n";
-import { SEASON_BG, type Season } from "@/utils/seasonData";
+import type { Season } from "@/utils/seasonData";
+import { assetUrl } from "@/utils/assets";
 
-/* ── 홈 화면과 동일한 디자인 좌표계 ────────────────────────
-   새 map-*.png = 1120 × 2048 계열 세로형 정원 배경
-   START 버튼 위치: (365, 1715), 원본 너비 430px
-──────────────────────────────────────────────────────────── */
-const DESIGN_W = 1120;
-const DESIGN_H = 2048;
-const BTN_DESIGN_X = 365;
-const BTN_DESIGN_Y = 1715;
-const BTN_DESIGN_W = 430;
+const DESIGN_W = 928;
+const DESIGN_H = 1694;
 
-interface BtnLayout { left: number; top: number; width: number; containerH: number }
+type Layout = {
+  offsetX: number;
+  offsetY: number;
+  renderW: number;
+  renderH: number;
+  scale: number;
+};
 
-function calcBtnLayout(containerW: number, containerH: number): BtnLayout {
-  const scale   = Math.max(containerW / DESIGN_W, containerH / DESIGN_H);
-  const renderW = DESIGN_W * scale;
-  const renderH = DESIGN_H * scale;
-  const offsetX = (containerW - renderW) / 2;
-  const offsetY = 0;
-  const scaleX  = renderW / DESIGN_W;
-  const scaleY  = renderH / DESIGN_H;
-  return {
-    left:       offsetX + BTN_DESIGN_X * scaleX,
-    top:        offsetY + BTN_DESIGN_Y * scaleY,
-    width:      BTN_DESIGN_W * scaleX,
-    containerH,
-  };
-}
-
-/* ── 난이도 설정 ─────────────────────────────────────────── */
-const DIFF_CONFIG: Record<EndlessDifficulty, {
-  emoji:      string;
-  accent:     string;   // 포인트 컬러 (텍스트·아이콘·선택 테두리)
-  iconBg:     string;   // 아이콘 배경
-  selBorder:  string;   // 선택 테두리
-  selShadow:  string;   // 선택 그림자
-  tagBg:      string;   // 난이도 태그 배경
-  tagText:    string;   // 난이도 태그 텍스트
-  startBg:    string;   // 시작 버튼 배경
-}> = {
-  easy: {
-    emoji:     "🌱",
-    accent:    "#4F9A37",
-    iconBg:    "#E6F6D8",
-    selBorder: "#5FAE45",
-    selShadow: "0 0 0 3px rgba(95,174,69,0.18), 0 10px 24px rgba(96,58,18,0.18)",
-    tagBg:     "#E6F6D8",
-    tagText:   "#2F6E22",
-    startBg:   "linear-gradient(180deg,#FFB13B,#F59E0B)",
-  },
-  normal: {
-    emoji:     "🌻",
-    accent:    "#D97706",
-    iconBg:    "#fef9c3",
-    selBorder: "#f59e0b",
-    selShadow: "0 0 0 3px rgba(245,158,11,0.20), 0 10px 24px rgba(96,58,18,0.18)",
-    tagBg:     "#fef9c3",
-    tagText:   "#92400e",
-    startBg:   "linear-gradient(180deg,#FFB13B,#F59E0B)",
-  },
-  hard: {
-    emoji:     "🌵",
-    accent:    "#B85B32",
-    iconBg:    "#FFE2D1",
-    selBorder: "#D46F39",
-    selShadow: "0 0 0 3px rgba(212,111,57,0.18), 0 10px 24px rgba(96,58,18,0.18)",
-    tagBg:     "#FFE2D1",
-    tagText:   "#88411F",
-    startBg:   "linear-gradient(180deg,#FFB13B,#F59E0B)",
-  },
+type Rect = {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
 };
 
 const DIFF_ORDER: EndlessDifficulty[] = ["easy", "normal", "hard"];
 
+const DIFF_PANEL: Record<EndlessDifficulty, string> = {
+  easy: assetUrl("/endless-select/easy-panel.png"),
+  normal: assetUrl("/endless-select/normal-panel.png"),
+  hard: assetUrl("/endless-select/hard-panel.png"),
+};
+
+const DIFF_PLANT: Record<EndlessDifficulty, string> = {
+  easy: assetUrl("/endless-select/plant-sprout.png"),
+  normal: assetUrl("/endless-select/plant-sunflower.png"),
+  hard: assetUrl("/endless-select/plant-cactus.png"),
+};
+
+const DIFF_CHECK: Record<EndlessDifficulty, string> = {
+  easy: assetUrl("/endless-select/check-easy.png"),
+  normal: assetUrl("/endless-select/check-normal.png"),
+  hard: assetUrl("/endless-select/check-hard.png"),
+};
+
+const DIFF_RECT: Record<EndlessDifficulty, Rect> = {
+  easy: { x: 200, y: 473, w: 527, h: 208 },
+  normal: { x: 200, y: 681, w: 527, h: 214 },
+  hard: { x: 200, y: 895, w: 527, h: 199 },
+};
+
+const CHECK_RECT: Record<EndlessDifficulty, Rect> = {
+  easy: { x: 569, y: 528, w: 96, h: 96 },
+  normal: { x: 568, y: 728, w: 92, h: 92 },
+  hard: { x: 570, y: 939, w: 96, h: 96 },
+};
+
+const TEXT_COLOR: Record<EndlessDifficulty, string> = {
+  easy: "#2f7f24",
+  normal: "#c15d11",
+  hard: "#9f2c22",
+};
+
+const PLANT_RECT: Record<EndlessDifficulty, Rect> = {
+  easy: { x: 294, y: 537, w: 67, h: 68 },
+  normal: { x: 288, y: 720, w: 82, h: 108 },
+  hard: { x: 288, y: 925, w: 78, h: 110 },
+};
+
+const DIFF_TEXT_POS: Record<EndlessDifficulty, { titleTop: string; sizeTop: string }> = {
+  easy: { titleTop: "34%", sizeTop: "70%" },
+  normal: { titleTop: "34%", sizeTop: "62%" },
+  hard: { titleTop: "34%", sizeTop: "70%" },
+};
+
 interface EndlessDifficultyModalProps {
-  onStart:    (difficulty: EndlessDifficulty) => void;
+  onStart: (difficulty: EndlessDifficulty) => void;
   onContinue: (difficulty: EndlessDifficulty) => void;
-  onClose:    () => void;
-  season?:    Season;
+  onClose: () => void;
+  season?: Season;
+}
+
+function calcLayout(containerW: number, containerH: number): Layout {
+  const scale = Math.max(containerW / DESIGN_W, containerH / DESIGN_H);
+  const renderW = DESIGN_W * scale;
+  const renderH = DESIGN_H * scale;
+  return {
+    offsetX: (containerW - renderW) / 2,
+    offsetY: (containerH - renderH) / 2,
+    renderW,
+    renderH,
+    scale,
+  };
+}
+
+function place(rect: Rect, layout: Layout): CSSProperties {
+  return {
+    position: "absolute",
+    left: layout.offsetX + rect.x * layout.scale,
+    top: layout.offsetY + rect.y * layout.scale,
+    width: rect.w * layout.scale,
+    height: rect.h * layout.scale,
+  };
+}
+
+function placeSafe(rect: Rect, layout: Layout, minLeft = 12, minTop = 12): CSSProperties {
+  const left = layout.offsetX + rect.x * layout.scale;
+  const top = layout.offsetY + rect.y * layout.scale;
+  return {
+    position: "absolute",
+    left: Math.max(minLeft, left),
+    top: Math.max(minTop, top),
+    width: rect.w * layout.scale,
+    height: rect.h * layout.scale,
+  };
+}
+
+function fitFont(px: number, layout: Layout, min = 12) {
+  return `${Math.max(min, px * layout.scale)}px`;
+}
+
+function getSavedHighestTile(save: ReturnType<typeof loadEndlessSave>) {
+  if (!save) return 0;
+
+  const boardTiles = save.board
+    .flat()
+    .map((tile) => tile?.value ?? 0);
+  const activeTiles = Object.values(save.activeTiles).map((tile) => tile.value);
+  return Math.max(0, ...boardTiles, ...activeTiles);
+}
+
+function ImageButton({
+  rect,
+  src,
+  alt,
+  onClick,
+  layout,
+  safePosition = false,
+  children,
+  className = "",
+  onPointerDown,
+  onPointerUp,
+  onPointerLeave,
+}: {
+  rect: Rect;
+  src: string;
+  alt: string;
+  onClick: () => void;
+  layout: Layout;
+  safePosition?: boolean;
+  children?: ReactNode;
+  className?: string;
+  onPointerDown?: () => void;
+  onPointerUp?: () => void;
+  onPointerLeave?: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      onPointerDown={onPointerDown}
+      onPointerUp={onPointerUp}
+      onPointerLeave={onPointerLeave}
+      className={`transition-transform active:scale-[0.985] ${className}`}
+      style={{
+        ...(safePosition ? placeSafe(rect, layout) : place(rect, layout)),
+        border: "none",
+        background: "transparent",
+        padding: 0,
+        cursor: "pointer",
+        zIndex: 10,
+      }}
+      aria-label={alt}
+    >
+      <img
+        src={src}
+        alt=""
+        draggable={false}
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "fill",
+          display: "block",
+          pointerEvents: "none",
+        }}
+      />
+      {children}
+    </button>
+  );
 }
 
 export function EndlessDifficultyModal({
-  onStart, onContinue, onClose, season = "spring",
+  onStart,
+  onContinue,
+  onClose,
 }: EndlessDifficultyModalProps) {
   const { t } = useTranslation();
   const save = loadEndlessSave();
-  const containerRef = useRef<HTMLDivElement>(null);
+  const savedHighestTile = getSavedHighestTile(save);
+  const savedPhase = save ? Math.min(save.claimedPhases.length + 1, 3) : 1;
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [selected, setSelected] = useState<EndlessDifficulty>("normal");
+  const [layout, setLayout] = useState<Layout>(() =>
+    calcLayout(window.innerWidth, window.innerHeight),
+  );
+  const [pressedStart, setPressedStart] = useState(false);
 
-  const [selected,    setSelected]    = useState<EndlessDifficulty>("normal");
-  const [visible,     setVisible]     = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [btnLayout,   setBtnLayout]   = useState<BtnLayout>({ left: 0, top: 0, width: 177, containerH: 844 });
-
-  /* 버튼 위치 계산 — 컨테이너 크기 기준 */
   useEffect(() => {
     const recalc = () => {
-      const el = containerRef.current;
-      const w  = el ? el.clientWidth  : window.innerWidth;
-      const h  = el ? el.clientHeight : window.innerHeight;
-      setBtnLayout(calcBtnLayout(w, h));
+      const el = rootRef.current;
+      setLayout(
+        calcLayout(el?.clientWidth ?? window.innerWidth, el?.clientHeight ?? window.innerHeight),
+      );
     };
+
     recalc();
     window.addEventListener("resize", recalc);
     return () => window.removeEventListener("resize", recalc);
   }, []);
 
-  useEffect(() => {
-    const id = setTimeout(() => setVisible(true), 30);
-    return () => clearTimeout(id);
-  }, []);
-
-  const handleStartPress = () => {
-    if (save && save.difficulty === selected) {
-      setShowConfirm(true);
-    } else {
-      onStart(selected);
-    }
-  };
-
-  const bgUrl = SEASON_BG[season] ?? SEASON_BG.spring;
-  const selectedCfg = DIFF_CONFIG[selected];
+  const startGame = () => onStart(selected);
 
   return (
     <div
-      ref={containerRef}
-      className="absolute inset-0 z-[140] flex flex-col overflow-hidden"
+      ref={rootRef}
+      className="absolute inset-0 z-[140] overflow-hidden"
+      style={{ background: "#8fcf61" }}
     >
-
-      {/* ── 계절 배경 ─────────────────────────────────────── */}
-      <div
-        className="absolute inset-0"
+      <img
+        src={assetUrl("/endless-select/intro-bg-stone-calm.png")}
+        alt=""
+        draggable={false}
         style={{
-          backgroundImage: `linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,248,226,0.32) 44%, rgba(255,238,183,0.74)), url("${bgUrl}")`,
-          backgroundSize: "cover",
-          backgroundPosition: "center top",
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          objectPosition: "center center",
+          pointerEvents: "none",
         }}
       />
 
-      {/* ── 헤더 ─────────────────────────────────────────── */}
-      <div
-        className="relative z-10 flex-shrink-0"
-        style={{ padding: "30px 18px 10px" }}
-      >
-        <button
-          onClick={onClose}
-          className="active:scale-90 transition-transform"
-          style={{
-            position: "absolute", left: 18, top: 22,
-            width: 58, height: 58, borderRadius: 18,
-            background: "linear-gradient(180deg, rgba(255,250,236,0.96), rgba(255,240,204,0.92))",
-            border: "3px solid rgba(153,91,36,0.54)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 33, color: "#7A4316", cursor: "pointer",
-            boxShadow: "0 7px 0 rgba(121,68,28,0.30), 0 13px 22px rgba(66,37,14,0.16), inset 0 2px 0 rgba(255,255,255,0.74)",
-            zIndex: 2,
-          }}
-        >←</button>
+      <ImageButton
+        rect={{ x: 42, y: 46, w: 104, h: 104 }}
+        src={assetUrl("/endless-select/back-normal.png")}
+        alt="back"
+        onClick={onClose}
+        layout={layout}
+        safePosition
+      />
 
+      <div
+        style={{
+          ...place({ x: 104, y: 150, w: 720, h: 236 }, layout),
+          zIndex: 5,
+          pointerEvents: "none",
+        }}
+      >
+        <img
+          src={assetUrl("/endless-select/title-blank.png")}
+          alt=""
+          draggable={false}
+          style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
+        />
         <div
           style={{
-            width: "min(74vw, 360px)",
-            margin: "72px auto 0",
-            padding: "16px 20px 20px",
-            borderRadius: 28,
-            textAlign: "center",
-            background: "linear-gradient(180deg, #C98234 0%, #A96324 48%, #7E4318 100%)",
-            border: "4px solid rgba(110,59,20,0.84)",
-            boxShadow: "0 10px 0 rgba(82,45,18,0.32), 0 18px 30px rgba(75,44,17,0.22), inset 0 4px 0 rgba(255,215,125,0.52)",
-            position: "relative",
-          }}
-        >
-          <span style={{ position: "absolute", top: -18, left: 18, fontSize: 27 }}>🌿</span>
-          <span style={{ position: "absolute", top: -18, right: 26, fontSize: 25 }}>🌼</span>
-          <h1 style={{
-            fontSize: "clamp(34px, 12vw, 58px)",
-            fontWeight: 900,
-            color: "#FFF7E5",
-            letterSpacing: 0,
+            position: "absolute",
+            inset: 0,
+            color: "#fff8e8",
+            fontSize: fitFont(82, layout, 38),
+            fontWeight: 1000,
             lineHeight: 1,
-            textShadow: "0 4px 0 #6B3410, 0 7px 11px rgba(50,26,10,0.28)",
-          }}>
-            {t("endless.title")}
-          </h1>
-        </div>
-
-        <div style={{ textAlign: "center" }}>
-          <p style={{
-            display: "inline-block",
-            fontSize: 20,
-            fontWeight: 900,
-            marginTop: 18,
-            color: "#5E3514",
+            textAlign: "center",
             letterSpacing: 0,
-            textShadow: "0 2px 0 rgba(255,255,255,0.72)",
-          }}>
-            {t("endless.selectDiff")} 🍃
-          </p>
-        </div>
-      </div>
-
-      {/* ── 카드 영역 (화면 중앙) ────────────────────────── */}
-      <div
-        className="relative z-10 flex flex-col items-center flex-1"
-        style={{ gap: 18, padding: "18px 18px 0", minHeight: 0 }}
-      >
-        {DIFF_ORDER.map((diff, i) => {
-          const cfg   = ENDLESS_CONFIGS[diff];
-          const dc    = DIFF_CONFIG[diff];
-          const isSel = selected === diff;
-          const delay = i * 0.08;
-
-          return (
-            <button
-              key={diff}
-              onClick={() => setSelected(diff)}
-              className="active:scale-[0.97]"
-              style={{
-                width: "min(84vw, 390px)",
-                minHeight: 118,
-                borderRadius: 30,
-                padding: "15px 20px",
-                background: isSel
-                  ? "linear-gradient(180deg, rgba(255,250,226,0.99), rgba(241,255,210,0.97))"
-                  : "linear-gradient(180deg, rgba(255,248,226,0.98), rgba(255,239,199,0.96))",
-                border: `4px solid ${isSel ? dc.selBorder : "rgba(210,156,76,0.56)"}`,
-                boxShadow: isSel
-                  ? `${dc.selShadow}, inset 0 3px 0 rgba(255,255,255,0.74)`
-                  : "0 8px 0 rgba(164,101,46,0.24), 0 16px 24px rgba(96,58,18,0.14), inset 0 3px 0 rgba(255,255,255,0.70)",
-                display: "flex", alignItems: "center", gap: 20,
-                textAlign: "left", cursor: "pointer",
-                transition: `border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.4s ease ${delay}s, transform 0.4s ease ${delay}s`,
-                opacity: visible ? 1 : 0,
-                transform: visible ? "none" : "translateY(24px)",
-              }}
-            >
-              {/* 아이콘 원 */}
-              <div style={{
-                width: 76, height: 76, borderRadius: 24, flexShrink: 0,
-                background: `radial-gradient(circle at 45% 28%, #FFFFFF 0%, ${dc.iconBg} 72%, rgba(128,82,36,0.14) 100%)`,
-                border: "2px solid rgba(126,77,32,0.18)",
-                boxShadow: "inset 0 2px 0 rgba(255,255,255,0.80), 0 3px 8px rgba(82,46,18,0.12)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 42,
-              }}>
-                {dc.emoji}
-              </div>
-
-              {/* 텍스트 */}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                  <span style={{
-                    fontSize: 36,
-                    fontWeight: 900,
-                    color: dc.accent,
-                    lineHeight: 1,
-                    letterSpacing: 0,
-                    textShadow: "0 2px 0 rgba(255,255,255,0.76)",
-                  }}>
-                    {t(`endless.diff.${diff}`)}
-                  </span>
-                  {/* 난이도 태그 */}
-                  <span style={{
-                    fontSize: 19,
-                    fontWeight: 900,
-                    background: dc.tagBg,
-                    color: dc.tagText,
-                    border: `2px solid ${dc.selBorder}55`,
-                    borderRadius: 14,
-                    padding: "5px 14px",
-                    lineHeight: 1,
-                  }}>
-                    {cfg.boardSize}×{cfg.boardSize}
-                  </span>
-                </div>
-              </div>
-
-              {/* 선택 체크 */}
-              {isSel && (
-                <div style={{
-                  width: 62, height: 62, borderRadius: "50%", flexShrink: 0,
-                  background: "linear-gradient(180deg, #9BDC45 0%, #5EAA1B 100%)",
-                  border: "4px solid rgba(67,122,12,0.54)",
-                  boxShadow: "0 5px 0 rgba(45,95,12,0.35), inset 0 2px 0 rgba(255,255,255,0.54)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 36, fontWeight: 900, color: "#fff",
-                  textShadow: "0 2px 0 rgba(33,83,6,0.45)",
-                }}>✓</div>
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      <div
-        className="relative z-20 flex-shrink-0"
-        style={{ padding: "18px 18px 18px" }}
-      >
-        <button
-          onClick={handleStartPress}
-          className="active:scale-[0.96]"
-          style={{
-            width: "min(84vw, 390px)",
-            height: 86,
+            textShadow:
+              "0 3px 0 #5c2d0e, 0 -2px 0 #5c2d0e, 2px 0 0 #5c2d0e, -2px 0 0 #5c2d0e, 0 7px 12px rgba(66,31,8,0.28)",
+            whiteSpace: "nowrap",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            margin: "0 auto",
-            cursor: "pointer",
-            border: "4px solid rgba(255,241,179,0.90)",
-            padding: 0,
-            opacity: visible ? 1 : 0,
-            transition: "opacity 0.4s ease 0.35s, transform 0.15s ease",
-            borderRadius: 26,
-            background: selectedCfg.startBg,
-            boxShadow: "0 9px 0 rgba(169,84,8,0.46), 0 16px 26px rgba(122,65,9,0.25), inset 0 3px 0 rgba(255,255,255,0.56)",
-            animation: "endlessStartGlow 2.4s ease-in-out infinite",
-            overflow: "hidden",
+            transform: `translateY(${8 * layout.scale}px)`,
           }}
         >
-          <span style={{
-            fontFamily: "var(--font-display)",
-            fontSize: 45,
-            fontWeight: 900,
-            color: "#fff",
-            letterSpacing: 0,
-            textShadow: "0 4px 0 rgba(118,55,9,0.55), 0 2px 12px rgba(0,0,0,0.20)",
-          }}>
-            START
-          </span>
-        </button>
-
-        {save && (
-          <div
-            style={{
-              width: "min(84vw, 390px)",
-              margin: "18px auto 0",
-              borderRadius: 22,
-              padding: "15px 18px",
-              background: "linear-gradient(180deg, rgba(255,248,229,0.96), rgba(255,238,201,0.96))",
-              border: "2px solid rgba(196,132,54,0.42)",
-              boxShadow: "0 7px 0 rgba(169,104,44,0.20), 0 14px 22px rgba(82,47,18,0.13), inset 0 2px 0 rgba(255,255,255,0.70)",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ fontSize: 34 }}>🌱</span>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 20, fontWeight: 900, color: "#5E3514", lineHeight: 1.15 }}>
-                  {t("endless.savedGame")}
-                </div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#9A7048", marginTop: 5 }}>
-                  {t(`endless.diff.${save.difficulty}`)} · {save.score.toLocaleString()}
-                </div>
-              </div>
-              <button
-                onClick={() => onContinue(save.difficulty)}
-                style={{
-                  padding: "11px 16px",
-                  borderRadius: 14,
-                  border: "2px solid rgba(67,122,12,0.42)",
-                  background: "linear-gradient(180deg, #A8DE4B 0%, #69AE21 100%)",
-                  color: "#fff",
-                  fontSize: 15,
-                  fontWeight: 900,
-                  boxShadow: "0 5px 0 rgba(48,98,13,0.35)",
-                }}
-              >
-                {t("endless.continue")}
-              </button>
-            </div>
-          </div>
-        )}
+          {t("endless.title")}
+        </div>
       </div>
 
-      {/* ── 하단 AD ───────────────────────────────────────── */}
-      <div
-        className="relative z-20 w-full h-9 flex-shrink-0 flex items-center justify-center text-[11px] font-medium select-none bg-white/45 backdrop-blur-sm text-foreground/30 border-t border-white/40"
-        aria-hidden="true"
-      >AD</div>
+      {DIFF_ORDER.map((diff) => {
+        const config = ENDLESS_CONFIGS[diff];
+        const textPos = DIFF_TEXT_POS[diff];
+        return (
+          <ImageButton
+            key={diff}
+            rect={DIFF_RECT[diff]}
+            src={DIFF_PANEL[diff]}
+            alt={t(`endless.diff.${diff}`)}
+            onClick={() => setSelected(diff)}
+            layout={layout}
+          >
+            <span
+              style={{
+                position: "absolute",
+                left: "54%",
+                top: textPos.titleTop,
+                transform: "translate(-50%, -50%)",
+                color: TEXT_COLOR[diff],
+                fontSize: fitFont(43, layout, 22),
+                fontWeight: 1000,
+                lineHeight: 1,
+                letterSpacing: 0,
+                textShadow: "0 3px 0 rgba(255,255,255,0.82), 0 5px 8px rgba(99,50,11,0.14)",
+                pointerEvents: "none",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {t(`endless.diff.${diff}`)}
+            </span>
+            <span
+              style={{
+                position: "absolute",
+                left: "54%",
+                top: textPos.sizeTop,
+                transform: "translate(-50%, -50%)",
+                color: "#fff",
+                fontSize: fitFont(21, layout, 13),
+                fontWeight: 1000,
+                lineHeight: 1,
+                textShadow: "0 2px 0 rgba(70,42,12,0.45)",
+                pointerEvents: "none",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {config.boardSize}×{config.boardSize}
+            </span>
+          </ImageButton>
+        );
+      })}
 
-      {/* ── 이어하기 확인 팝업 ────────────────────────────── */}
-      {showConfirm && save && (
-        <div
-          className="absolute inset-0 z-30 flex items-end justify-center pb-24"
-          style={{ background: "rgba(76,46,12,0.34)", backdropFilter: "blur(8px)" }}
-          onClick={() => setShowConfirm(false)}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
+      {DIFF_ORDER.map((diff) => (
+        <img
+          key={`plant-${diff}`}
+          src={DIFF_PLANT[diff]}
+          alt=""
+          draggable={false}
+          style={{
+            ...place(PLANT_RECT[diff], layout),
+            zIndex: 15,
+            objectFit: "contain",
+            pointerEvents: "none",
+          }}
+        />
+      ))}
+
+      {DIFF_ORDER.map((diff) =>
+        selected === diff ? (
+          <img
+            key={`check-${diff}`}
+            src={DIFF_CHECK[diff]}
+            alt=""
+            draggable={false}
             style={{
-              width: "calc(100% - 40px)", maxWidth: 340,
-              borderRadius: 24,
-              background: "linear-gradient(180deg, rgba(255,250,236,0.98), rgba(255,240,204,0.95))",
-              border: "1.5px solid rgba(210,156,76,0.38)",
-              boxShadow: "0 18px 48px rgba(96,58,18,0.24)",
-              padding: "28px 24px 20px",
-              display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
+              ...place(CHECK_RECT[diff], layout),
+              zIndex: 16,
+              objectFit: "contain",
+              pointerEvents: "none",
+              filter: "drop-shadow(0 3px 4px rgba(80,60,20,0.2))",
+            }}
+          />
+        ) : null,
+      )}
+
+      <ImageButton
+        rect={{ x: 163, y: 1125, w: 602, h: 187 }}
+        src={assetUrl("/endless-select/start-blank.png")}
+        alt={t("endless.start")}
+        onClick={startGame}
+        layout={layout}
+        onPointerDown={() => setPressedStart(true)}
+        onPointerUp={() => setPressedStart(false)}
+        onPointerLeave={() => setPressedStart(false)}
+        className={pressedStart ? "scale-[0.975]" : ""}
+      >
+        <span
+          style={{
+            position: "absolute",
+            inset: 0,
+            color: "#fff",
+            fontSize: fitFont(58, layout, 28),
+            fontWeight: 1000,
+            lineHeight: 1,
+            letterSpacing: 0,
+            textShadow:
+              "0 3px 0 #88441a, 0 -1px 0 #88441a, 2px 0 0 #88441a, -2px 0 0 #88441a, 0 6px 8px rgba(111,50,13,0.2)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            paddingBottom: 18 * layout.scale,
+            pointerEvents: "none",
+            whiteSpace: "nowrap",
+          }}
+        >
+          START
+        </span>
+      </ImageButton>
+
+      {save && (
+        <div style={{ ...place({ x: 146, y: 1336, w: 637, h: 199 }, layout), zIndex: 12 }}>
+          <img
+            src={assetUrl("/endless-select/saved-panel-blank.png")}
+            alt=""
+            draggable={false}
+            style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
+          />
+          <img
+            src={DIFF_PLANT[save.difficulty]}
+            alt=""
+            draggable={false}
+            style={{
+              position: "absolute",
+              left: "6.8%",
+              top: "25%",
+              width: "13.5%",
+              height: "54%",
+              objectFit: "contain",
+              pointerEvents: "none",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              left: "16.2%",
+              top: "16%",
+              width: "48%",
+              color: "#5b3518",
+              fontWeight: 1000,
+              fontSize: fitFont(21, layout, 11),
+              lineHeight: 1.22,
+              pointerEvents: "none",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
             }}
           >
-            <div style={{ fontSize: 36, marginBottom: 4 }}>💾</div>
-            <p style={{ fontSize: 17, fontWeight: 900, color: "#4C2E0C", textAlign: "center" }}>
-              저장된 게임이 있어요
-            </p>
-            <p style={{
-              fontSize: 13, color: "#9A7048",
-              textAlign: "center", lineHeight: 1.5, marginBottom: 8,
-            }}>
-              {t(`endless.diff.${save.difficulty}`)} 게임을 이어할까요?
-            </p>
-            <button
-              onClick={() => onContinue(save.difficulty)}
-              style={{
-                width: "100%", padding: "14px 0", borderRadius: 14,
-                background: "linear-gradient(180deg, #7BCB63 0%, #4F9A37 100%)",
-                border: "none", color: "#fff",
-                fontSize: 16, fontWeight: 900, cursor: "pointer",
-              }}
-            >
-              {t("endless.continue")}
-            </button>
-            <button
-              onClick={() => { setShowConfirm(false); onStart(selected); }}
-              style={{
-                width: "100%", padding: "13px 0", borderRadius: 14,
-                background: "rgba(255,255,255,0.52)",
-                border: "1px solid rgba(210,156,76,0.38)",
-                color: "#9A7048",
-                fontSize: 15, fontWeight: 700, cursor: "pointer", marginTop: 4,
-              }}
-            >
-              {t("endless.restart")}
-            </button>
+            {t("endless.savedGame")}
           </div>
+          <div
+            style={{
+              position: "absolute",
+              left: "16.2%",
+              top: "45%",
+              width: "49%",
+              color: "#8b6540",
+              fontWeight: 900,
+              fontSize: fitFont(13, layout, 8),
+              lineHeight: 1.45,
+              pointerEvents: "none",
+              whiteSpace: "normal",
+            }}
+          >
+            <div>
+              Stage {savedPhase} · {t(`endless.diff.${save.difficulty}`)}{" "}
+              {ENDLESS_CONFIGS[save.difficulty].boardSize}×
+              {ENDLESS_CONFIGS[save.difficulty].boardSize}
+            </div>
+            <div>
+              {t("game.bestScore")}: {savedHighestTile.toLocaleString()} · {t("game.score")}:{" "}
+              {save.score.toLocaleString()}
+            </div>
+          </div>
+          <button
+            onClick={() => onContinue(save.difficulty)}
+            aria-label={t("endless.continue")}
+            style={{
+              position: "absolute",
+              right: "7.2%",
+              top: "15%",
+              width: "25%",
+              height: "30%",
+              border: "none",
+              background: "transparent",
+              cursor: "pointer",
+              color: "#fff",
+              fontSize: fitFont(18, layout, 10),
+              fontWeight: 1000,
+              textShadow: "0 2px 0 rgba(51,101,18,0.5)",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {t("endless.continue")}
+          </button>
+          <button
+            onClick={startGame}
+            aria-label={t("endless.restart")}
+            style={{
+              position: "absolute",
+              right: "7.2%",
+              bottom: "17%",
+              width: "25%",
+              height: "28%",
+              border: "none",
+              background: "transparent",
+              cursor: "pointer",
+              color: "#805022",
+              fontSize: fitFont(16, layout, 10),
+              fontWeight: 950,
+              whiteSpace: "nowrap",
+            }}
+          >
+            {t("endless.restart")}
+          </button>
         </div>
       )}
     </div>

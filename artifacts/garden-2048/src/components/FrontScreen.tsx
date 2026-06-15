@@ -63,16 +63,16 @@ type StageNodeTemplate = {
 /* 10개 노드 — 사용자 지정 SVG ellipse 중심 기준 */
 /* stage 진행 방향: 위 → 아래 */
 const STAGE_NODE_TEMPLATES: StageNodeTemplate[] = [
-  { stage:  1, cx: 487,   cy:  512,   rx: 54,   ry: 29 },
-  { stage:  2, cx: 617.5, cy:  621.5, rx: 56.5, ry: 30.5 },
-  { stage:  3, cx: 541.5, cy:  752,   rx: 65.5, ry: 35 },
-  { stage:  4, cx: 426,   cy:  855,   rx: 67,   ry: 36 },
-  { stage:  5, cx: 572,   cy:  959,   rx: 67,   ry: 36 },
-  { stage:  6, cx: 694,   cy: 1096,   rx: 67,   ry: 36 },
-  { stage:  7, cx: 795.5, cy: 1260,   rx: 74.5, ry: 40 },
-  { stage:  8, cx: 674,   cy: 1394.5, rx: 77,   ry: 41.5 },
-  { stage:  9, cx: 483.5, cy: 1499.5, rx: 88.5, ry: 47.5 },
-  { stage: 10, cx: 510,   cy: 1664,   rx: 97,   ry: 49 },
+  { stage:  1, cx: 519.6, cy:  581.5, rx:  85.1, ry: 68.9 },
+  { stage:  2, cx: 627.0, cy:  669.8, rx:  85.1, ry: 68.9 },
+  { stage:  3, cx: 604.1, cy:  785.8, rx:  97.2, ry: 78.6 },
+  { stage:  4, cx: 494.2, cy:  893.4, rx:  97.2, ry: 78.6 },
+  { stage:  5, cx: 595.0, cy: 1007.7, rx:  99.0, ry: 80.4 },
+  { stage:  6, cx: 705.4, cy: 1132.2, rx: 100.8, ry: 81.6 },
+  { stage:  7, cx: 781.5, cy: 1272.4, rx: 106.8, ry: 86.4 },
+  { stage:  8, cx: 697.6, cy: 1439.9, rx:  92.9, ry: 61.7 },
+  { stage:  9, cx: 558.2, cy: 1548.1, rx: 108.0, ry: 71.9 },
+  { stage: 10, cx: 506.3, cy: 1686.0, rx: 114.1, ry: 75.6 },
 ];
 
 const LEVELS_PER_PAGE = 10;
@@ -246,15 +246,15 @@ export function FrontScreen({
    */
   const mp = SEASON_MENU_PALETTE[season];
   const leftMenuItems: MenuItemDef[] = [
-    { key: "mission",  x:  37, y: 166, iconPng: assetUrl("/menu-mission.png"),  bgColor: mp.bg, textColor: mp.text, shadowColor: mp.shadow },
-    { key: "card",     x:  37, y: 379, iconPng: assetUrl("/menu-card.png"),     bgColor: mp.bg, textColor: mp.text, shadowColor: mp.shadow },
-    { key: "infinite", x:  37, y: 592, iconPng: assetUrl("/menu-infinite.png"), bgColor: mp.bg, textColor: mp.text, shadowColor: mp.shadow },
+    { key: "mission",  x:  37, y: 166, iconPng: assetUrl("/ui/home-final/menu-mission.png"),  bgColor: mp.bg, textColor: mp.text, shadowColor: mp.shadow },
+    { key: "card",     x:  37, y: 379, iconPng: assetUrl("/ui/home-final/menu-card.png"),     bgColor: mp.bg, textColor: mp.text, shadowColor: mp.shadow },
+    { key: "infinite", x:  37, y: 592, iconPng: assetUrl("/ui/home-final/menu-infinite.png"), bgColor: mp.bg, textColor: mp.text, shadowColor: mp.shadow },
   ];
   const rightMenuItems: MenuItemDef[] = [
-    { key: "shop",     x: 906, y: 166, iconPng: assetUrl("/menu-shop.png"),     bgColor: mp.bg, textColor: mp.text, shadowColor: mp.shadow },
-    { key: "settings", x: 906, y: 379, iconPng: assetUrl("/menu-settings.png"), bgColor: mp.bg, textColor: mp.text, shadowColor: mp.shadow },
+    { key: "shop",     x: 906, y: 166, iconPng: assetUrl("/ui/home-final/menu-shop.png"),     bgColor: mp.bg, textColor: mp.text, shadowColor: mp.shadow },
+    { key: "settings", x: 906, y: 379, iconPng: assetUrl("/ui/home-final/menu-settings.png"), bgColor: mp.bg, textColor: mp.text, shadowColor: mp.shadow },
     ...(!isPremiumActive ? [
-      { key: "subscribe", x: 906, y: 592, iconPng: assetUrl("/menu-subscribe.png"), bgColor: "#FFAE00", textColor: "#6D1D00", shadowColor: "rgba(239,120,0,0.65)" },
+      { key: "subscribe", x: 906, y: 592, iconPng: assetUrl("/ui/home-final/menu-subscribe.png"), bgColor: "#FFAE00", textColor: "#6D1D00", shadowColor: "rgba(239,120,0,0.65)" },
     ] : []),
   ];
 
@@ -520,11 +520,11 @@ function HomePathOverlay({ bg, season }: { bg: BgLayout; season: Season }) {
  * HomeTitle — title.svg, width 기준 비율 유지
  * ============================================================ */
 function HomeTitle({ bg, season }: { bg: BgLayout; season: Season }) {
-  const { ry, scaleX } = toRenderPoint(388, 162, bg);
-  const w = 344 * scaleX * 1.2;
+  const { ry, scaleX } = toRenderPoint(388, 126, bg);
+  const w = 390 * scaleX;
   return (
     <img
-      src={assetUrl("/title.svg")}
+      src={assetUrl("/ui/home-final/title-garden2048.png")}
       alt="Garden 2048"
       draggable={false}
       style={{
@@ -537,7 +537,7 @@ function HomeTitle({ bg, season }: { bg: BgLayout; season: Season }) {
         objectFit:     "contain",
         zIndex:        10,
         pointerEvents: "none",
-        filter:        SEASON_TITLE_FILTER[season],
+        filter:        season === "spring" ? "none" : SEASON_TITLE_FILTER[season],
         transition:    "filter 0.6s ease",
       }}
     />
@@ -716,23 +716,14 @@ interface HomeMenuButtonProps {
 function HomeMenuButton({ item, label, badge, bg, onClick }: HomeMenuButtonProps) {
   const { rx, ry, scaleX } = toRenderPoint(item.x, item.y, bg);
   // SVG 원본: 카드 173×173 시각 영역 + 하단 6px 그림자 = 총 179px
-  const cardW      = 173 * scaleX;
-  const cardVisH   = 173 * scaleX;  // 시각적 카드 높이
-  const cardH      = 179 * scaleX;  // 버튼 전체 높이 (그림자 포함)
-  const cornerR    = 30 * scaleX;
+  const cardW      = 184 * scaleX;
+  const cardH      = 228 * scaleX;
 
   const screenPad  = 6;
   const isLeftMenu = item.x < DESIGN_W / 2;
   const clampedX   = isLeftMenu
     ? Math.max(screenPad, rx)
     : Math.min(bg.containerW - cardW - screenPad, rx);
-
-  // 3D 카드 하단 쉐도우: item.shadowColor 우선, 없으면 기존 fallback
-  const shadowColor = item.shadowColor ?? "rgba(197,154,104,1.0)";
-  const cardShadow = `0 ${6 * scaleX}px 0 ${shadowColor}, 0 ${12 * scaleX}px ${20 * scaleX}px rgba(57,30,9,0.20), inset 0 2px 0 rgba(255,255,255,0.70)`;
-  const accentShadow = item.key === "premium"
-    ? "inset 0 -10px 16px rgba(255,151,0,0.38)"
-    : "inset 0 -10px 16px rgba(196,142,72,0.13)";
 
   return (
     <button
@@ -778,70 +769,36 @@ function HomeMenuButton({ item, label, badge, bg, onClick }: HomeMenuButtonProps
         </span>
       )}
 
-      {/* 카드 본체 — 시각 높이 173px (그림자 제외) */}
-      <div style={{
-        width:           cardW,
-        height:          cardVisH,
-        borderRadius:    cornerR,
-        overflow:        "hidden",
-        display:         "flex",
-        flexDirection:   "column",
-        justifyContent:  "center",
-        alignItems:      "center",
-        gap:             8 * scaleX,
-        paddingTop:      15 * scaleX,
-        paddingBottom:   14 * scaleX,
-        boxShadow:       cardShadow,
-        border:          `${Math.max(1, 2 * scaleX)}px solid rgba(124,75,28,0.22)`,
-        background:      `linear-gradient(180deg, rgba(255,251,232,0.96) 0%, ${item.bgColor} 72%, ${item.bgColor} 100%)`,
-        outline:         `${Math.max(1, 1.5 * scaleX)}px solid rgba(255,255,255,0.52)`,
-        outlineOffset:   -5 * scaleX,
-        ...({ boxShadow: `${cardShadow}, ${accentShadow}` } as React.CSSProperties),
-      }}>
-        {/* 아이콘 웰 */}
-        <span
-          style={{
-            width:           94 * scaleX,
-            height:          86 * scaleX,
-            borderRadius:    24 * scaleX,
-            display:         "flex",
-            alignItems:      "center",
-            justifyContent:  "center",
-            background:      "radial-gradient(circle at 45% 30%, rgba(255,255,255,0.92) 0%, rgba(255,245,215,0.56) 58%, rgba(142,87,39,0.12) 100%)",
-            border:          "1px solid rgba(128,79,31,0.18)",
-            boxShadow:       "inset 0 2px 0 rgba(255,255,255,0.70), 0 2px 4px rgba(75,45,18,0.10)",
-            flexShrink:      0,
-          }}
-        >
-          <img
-            src={item.iconPng}
-            alt=""
-            draggable={false}
-            style={{
-              width:     78 * scaleX,
-              height:    78 * scaleX,
-              objectFit: "contain",
-              flexShrink: 0,
-              filter:    "drop-shadow(0 3px 3px rgba(82,42,14,0.18))",
-            }}
-          />
-        </span>
+      <img
+        src={item.iconPng}
+        alt=""
+        draggable={false}
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "contain",
+          filter: "drop-shadow(0 7px 8px rgba(57,30,9,0.18))",
+        }}
+      />
 
-        {/* 라벨 */}
-        <span style={{
-          fontSize:      Math.max(12, 30 * scaleX),
-          fontWeight:    800,
-          color:         item.textColor,
-          lineHeight:    1,
-          textAlign:     "center",
-          whiteSpace:    "nowrap",
-          letterSpacing: 0,
-          flexShrink:    0,
-          textShadow:    "0 1px 0 rgba(255,255,255,0.70)",
-        }}>
-          {label}
-        </span>
-      </div>
+      <span style={{
+        position:      "absolute",
+        left:          "50%",
+        bottom:        16 * scaleX,
+        transform:     "translateX(-50%)",
+        fontSize:      Math.max(12, 30 * scaleX),
+        fontWeight:    900,
+        color:         item.textColor,
+        lineHeight:    1,
+        textAlign:     "center",
+        whiteSpace:    "nowrap",
+        letterSpacing: 0,
+        textShadow:    "0 1px 0 rgba(255,255,255,0.78), 0 2px 3px rgba(80,45,12,0.14)",
+      }}>
+        {label}
+      </span>
     </button>
   );
 }
@@ -917,6 +874,7 @@ function HomeStageMap({
             >
               {STAGE_NODE_TEMPLATES.map((tmpl) => {
                 const level   = pageStart + (tmpl.stage - 1);
+                const perspectiveScale = 0.8 + (tmpl.stage - 1) * (0.3 / (LEVELS_PER_PAGE - 1));
                 const status: NodeStatus =
                   level <= clearedLevel      ? "done"      :
                   level === clearedLevel + 1 ? "current"   :
@@ -937,7 +895,7 @@ function HomeStageMap({
                     x={rx}
                     y={ry}
                     scaleX={scaleX}
-                    nodeScale={tmpl.rx / 74.5}
+                    nodeScale={perspectiveScale}
                     depth={tmpl.stage}
                     onClick={() => onSelectLevel(level)}
                   />
@@ -956,10 +914,10 @@ function HomeStageMap({
  * ============================================================ */
 const NODE_ASSETS: Record<Season, Record<NodeStatus, string>> = {
   spring: {
-    done:      assetUrl("/nodes/map/spring-complete.png"),
-    current:   assetUrl("/nodes/map/animated/spring-playing-wave-1.png"),
-    available: assetUrl("/nodes/map/spring-before.png"),
-    locked:    assetUrl("/nodes/map/spring-before.png"),
+    done:      assetUrl("/nodes/map/final/spring-base.png"),
+    current:   assetUrl("/nodes/map/final/spring-base.png"),
+    available: assetUrl("/nodes/map/final/spring-base.png"),
+    locked:    assetUrl("/nodes/map/final/spring-base.png"),
   },
   summer: {
     done:      assetUrl("/nodes/map/summer-complete.png"),
@@ -990,6 +948,26 @@ const NODE_WAVE_FRAMES: Partial<Record<Season, string[]>> = {
   ],
 };
 
+const SPRING_PLAY_NODE_ASSETS = {
+  left: assetUrl("/nodes/map/final/spring-boy-left.png"),
+  right: assetUrl("/nodes/map/final/spring-boy-right.png"),
+};
+
+const SPRING_COMPLETE_FLOWERS = assetUrl("/nodes/map/final/spring-complete-flowers.png");
+
+const SPRING_PLAY_NODE_SIDE: Record<number, "left" | "right"> = {
+  1: "right",
+  2: "left",
+  3: "right",
+  4: "right",
+  5: "left",
+  6: "left",
+  7: "right",
+  8: "right",
+  9: "right",
+  10: "right",
+};
+
 /* ============================================================
  * StageNode — 위치·크기·배지 구조 절대 변경 금지
  * 변경 범위: <NodeSvg> → <img> (PNG asset), button에 float 애니메이션
@@ -1014,16 +992,21 @@ function StageNode({ level, status, season, x, y, scaleX, nodeScale, depth, onCl
   const [waveFrame, setWaveFrame] = useState(0);
   const waveTimersRef = useRef<number[]>([]);
 
-  const nodeSize = (isCurrent ? 168 : 148) * scaleX * nodeScale;
+  const nodeSize = 220 * scaleX * nodeScale;
   const nodeWidth = nodeSize;
   const nodeHeight = nodeSize;
 
-  const badgeSize     = Math.max(20, 44 * scaleX);
-  const badgeFontSize = Math.max(11, 14 * scaleX);
+  const badgeSize     = Math.max(18, 44 * scaleX * nodeScale);
+  const badgeFontSize = Math.max(10, 14 * scaleX * nodeScale);
   const waveFrames = NODE_WAVE_FRAMES[season];
-  const nodeAsset = isCurrent && isWaving && waveFrames
-    ? waveFrames[waveFrame]
-    : NODE_ASSETS[season]?.[status] ?? NODE_ASSETS.spring[status];
+  const isSpringCurrent = season === "spring" && isCurrent;
+  const playSide = SPRING_PLAY_NODE_SIDE[depth] ?? "right";
+  const isSpringDone = season === "spring" && isDone;
+  const baseNodeAsset = isCurrent && isWaving && waveFrames && season !== "spring"
+      ? waveFrames[waveFrame]
+      : NODE_ASSETS[season]?.[status] ?? NODE_ASSETS.spring[status];
+  const playOverlayWidth = nodeWidth * 1.62;
+  const completeOverlayWidth = nodeWidth * 1.12;
 
   useEffect(() => {
     setIsWaving(false);
@@ -1094,7 +1077,7 @@ function StageNode({ level, status, season, x, y, scaleX, nodeScale, depth, onCl
       >
         {/* PNG 노드 아이콘 — 계절별 흙/캐릭터/꽃핀 화단 */}
         <img
-          src={nodeAsset}
+          src={baseNodeAsset}
           alt=""
           draggable={false}
           style={{
@@ -1103,17 +1086,56 @@ function StageNode({ level, status, season, x, y, scaleX, nodeScale, depth, onCl
             height:     nodeHeight,
             objectFit:  "contain",
             opacity:    1,
-            filter:     isLocked ? "grayscale(0.18) saturate(0.90) brightness(0.96)" : undefined,
           }}
         />
+
+        {isSpringCurrent && (
+          <img
+            src={SPRING_PLAY_NODE_ASSETS[playSide]}
+            alt=""
+            draggable={false}
+            style={{
+              position: "absolute",
+              left: playSide === "right" ? "9%" : "-71%",
+              bottom: "36%",
+              width: playOverlayWidth,
+              height: "auto",
+              objectFit: "contain",
+              pointerEvents: "none",
+              transform: isWaving ? "translateY(-1.5%) rotate(-1deg)" : "none",
+              transformOrigin: "50% 85%",
+              transition: "transform 110ms ease",
+              zIndex: 3,
+            }}
+          />
+        )}
+
+        {isSpringDone && (
+          <img
+            src={SPRING_COMPLETE_FLOWERS}
+            alt=""
+            draggable={false}
+            style={{
+              position: "absolute",
+              left: "50%",
+              bottom: "43%",
+              width: completeOverlayWidth,
+              height: "auto",
+              objectFit: "contain",
+              pointerEvents: "none",
+              transform: "translateX(-50%)",
+              zIndex: 2,
+            }}
+          />
+        )}
 
         {/* 배지 + 숫자 — 얼굴을 가리지 않도록 흙 영역 하단에 배치 */}
         <div
           style={{
             position:      "absolute",
             left:          "50%",
-            top:           isCurrent ? "82%" : "76%",
-            transform:     "translateX(-50%)",
+            top:           isCurrent ? "77%" : "76%",
+            transform:     "translate(-50%, -50%)",
             width:         badgeSize,
             height:        badgeSize,
             borderRadius:  9999,
@@ -1131,6 +1153,7 @@ function StageNode({ level, status, season, x, y, scaleX, nodeScale, depth, onCl
             alignItems:    "center",
             justifyContent:"center",
             pointerEvents: "none",
+            zIndex:        4,
           }}
         >
           <span style={{
@@ -1155,8 +1178,8 @@ function StageNode({ level, status, season, x, y, scaleX, nodeScale, depth, onCl
  * StartButton — start_button.svg + 계절별 CSS filter
  * ============================================================ */
 function StartButton({ bg, season, onClick }: { bg: BgLayout; season: Season; onClick: () => void }) {
-  const { rx, ry, scaleX } = toRenderPoint(365, 1715, bg);
-  const w = 430 * scaleX;
+  const { rx, ry, scaleX } = toRenderPoint(365, 1810, bg);
+  const w = 410 * scaleX;
 
   return (
     <button
@@ -1180,18 +1203,36 @@ function StartButton({ bg, season, onClick }: { bg: BgLayout; season: Season; on
       }}
     >
       <img
-        src={assetUrl("/start_button.svg")}
-        alt="START"
+        src={assetUrl("/ui/home-final/start-button-bg.png")}
+        alt=""
         draggable={false}
         style={{
           display:    "block",
           width:      "100%",
           height:     "auto",
           objectFit:  "contain",
-          filter:     SEASON_START_FILTER[season],
+          filter:     season === "spring" ? "none" : SEASON_START_FILTER[season],
           transition: "filter 0.6s ease",
         }}
       />
+      <span
+        style={{
+          position: "absolute",
+          left: "50%",
+          top: "50%",
+          transform: "translate(-50%, -52%)",
+          color: "#FFFFFF",
+          fontSize: Math.max(24, 54 * scaleX),
+          fontWeight: 900,
+          lineHeight: 1,
+          letterSpacing: 0,
+          textShadow: "0 3px 0 #8C3C12, 0 5px 10px rgba(95,45,10,0.35)",
+          pointerEvents: "none",
+          whiteSpace: "nowrap",
+        }}
+      >
+        START
+      </span>
     </button>
   );
 }
