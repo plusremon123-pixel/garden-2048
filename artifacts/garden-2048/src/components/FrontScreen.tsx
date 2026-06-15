@@ -84,6 +84,7 @@ interface MenuItemDef {
   x:           number;
   y:           number;
   iconPng:     string;  // PNG 아이콘 경로
+  bgPng:       string;  // PNG 카드 배경 경로
   bgColor:     string;  // 카드 배경색
   textColor:   string;  // 라벨 텍스트 색상
   shadowColor?: string; // 하단 3D 쉐도우 색 (없으면 bgColor 기반 자동)
@@ -245,16 +246,19 @@ export function FrontScreen({
    *   subscribe:    minTextY≈722,    card-rel≈130, ratio≈0.726 → safe 0.69
    */
   const mp = SEASON_MENU_PALETTE[season];
+  const normalMenuBg = assetUrl("/ui/home-final/menu-bg/normal.png");
+  const purpleMenuBg = assetUrl("/ui/home-final/menu-bg/purple.png");
+  const goldMenuBg   = assetUrl("/ui/home-final/menu-bg/gold.png");
   const leftMenuItems: MenuItemDef[] = [
-    { key: "mission",  x:  37, y: 166, iconPng: assetUrl("/menu-mission.png"),  bgColor: mp.bg, textColor: mp.text, shadowColor: mp.shadow },
-    { key: "card",     x:  37, y: 379, iconPng: assetUrl("/menu-card.png"),     bgColor: mp.bg, textColor: mp.text, shadowColor: mp.shadow },
-    { key: "infinite", x:  37, y: 592, iconPng: assetUrl("/menu-infinite.png"), bgColor: "#7D37B7", textColor: "#FFFFFF", shadowColor: "rgba(87,35,133,0.55)" },
+    { key: "mission",  x:  37, y: 166, iconPng: assetUrl("/ui/home-final/icons/menu-mission.png"),  bgPng: normalMenuBg, bgColor: mp.bg, textColor: mp.text, shadowColor: mp.shadow },
+    { key: "card",     x:  37, y: 379, iconPng: assetUrl("/ui/home-final/icons/menu-card.png"),     bgPng: normalMenuBg, bgColor: mp.bg, textColor: mp.text, shadowColor: mp.shadow },
+    { key: "infinite", x:  37, y: 592, iconPng: assetUrl("/ui/home-final/icons/menu-infinite.png"), bgPng: purpleMenuBg, bgColor: "#7D37B7", textColor: "#FFFFFF", shadowColor: "rgba(87,35,133,0.55)" },
   ];
   const rightMenuItems: MenuItemDef[] = [
-    { key: "shop",     x: 906, y: 166, iconPng: assetUrl("/menu-shop.png"),     bgColor: mp.bg, textColor: mp.text, shadowColor: mp.shadow },
-    { key: "settings", x: 906, y: 379, iconPng: assetUrl("/menu-settings.png"), bgColor: mp.bg, textColor: mp.text, shadowColor: mp.shadow },
+    { key: "shop",     x: 906, y: 166, iconPng: assetUrl("/ui/home-final/icons/menu-shop.png"),     bgPng: normalMenuBg, bgColor: mp.bg, textColor: mp.text, shadowColor: mp.shadow },
+    { key: "settings", x: 906, y: 379, iconPng: assetUrl("/ui/home-final/icons/menu-settings.png"), bgPng: normalMenuBg, bgColor: mp.bg, textColor: mp.text, shadowColor: mp.shadow },
     ...(!isPremiumActive ? [
-      { key: "subscribe", x: 906, y: 592, iconPng: assetUrl("/menu-subscribe.png"), bgColor: "#FFAE00", textColor: "#6D1D00", shadowColor: "rgba(239,120,0,0.65)" },
+      { key: "subscribe", x: 906, y: 592, iconPng: assetUrl("/ui/home-final/icons/menu-subscribe.png"), bgPng: goldMenuBg, bgColor: "#FFAE00", textColor: "#6D1D00", shadowColor: "rgba(239,120,0,0.65)" },
     ] : []),
   ];
 
@@ -715,13 +719,25 @@ interface HomeMenuButtonProps {
 
 function HomeMenuButton({ item, label, badge, bg, onClick }: HomeMenuButtonProps) {
   const { rx, ry, scaleX } = toRenderPoint(item.x, item.y, bg);
-  // SVG 원본: 카드 173×173 시각 영역 + 하단 6px 그림자 = 총 179px
+  // 시안 메뉴는 배경 PNG + 아이콘 PNG + 텍스트를 별도 레이어로 합성한다.
+  // 아이콘 자체에 카드 배경을 포함하지 않아 "박스 안 박스"가 생기지 않는다.
   const cardW      = 166 * scaleX;
-  const cardH      = 188 * scaleX;
-  const cardVisH   = 172 * scaleX;
-  const cornerR    = 27 * scaleX;
+  const cardH      = 166 * scaleX;
   const isSpecial  = item.key === "infinite" || item.key === "subscribe";
-  const iconSize   = (item.key === "infinite" ? 72 : item.key === "settings" ? 70 : 76) * scaleX;
+  const iconSize   = (
+    item.key === "settings"  ? 75 :
+    item.key === "shop"      ? 78 :
+    item.key === "subscribe" ? 78 :
+    item.key === "infinite"  ? 82 :
+    82
+  ) * scaleX;
+  const iconTop    = (
+    item.key === "shop"      ? 22 :
+    item.key === "settings"  ? 23 :
+    item.key === "subscribe" ? 23 :
+    item.key === "infinite"  ? 18 :
+    18
+  ) * scaleX;
   const displayLabel =
     item.key === "infinite" && label.replace(/\s/g, "") === "무한게임"
       ? "무한\n게임"
@@ -777,64 +793,45 @@ function HomeMenuButton({ item, label, badge, bg, onClick }: HomeMenuButtonProps
         </span>
       )}
 
-      <div
+      <img
+        src={item.bgPng}
+        alt=""
+        draggable={false}
         style={{
           position:      "absolute",
           left:          0,
           top:           0,
           width:         cardW,
-          height:        cardVisH,
-          borderRadius:  cornerR,
-          overflow:      "hidden",
-          border:        `${Math.max(1, 2 * scaleX)}px solid rgba(124,75,28,0.24)`,
-          outline:       `${Math.max(1, 1.5 * scaleX)}px solid rgba(255,255,255,0.58)`,
-          outlineOffset: -5 * scaleX,
-          background:    isSpecial
-            ? `linear-gradient(180deg, rgba(255,232,112,0.95) 0%, ${item.bgColor} 56%, ${item.bgColor} 100%)`
-            : `linear-gradient(180deg, rgba(255,252,235,0.98) 0%, ${item.bgColor} 78%, ${item.bgColor} 100%)`,
-          boxShadow:     `0 ${6 * scaleX}px 0 ${item.shadowColor ?? "rgba(197,154,104,0.95)"}, 0 ${11 * scaleX}px ${17 * scaleX}px rgba(57,30,9,0.20), inset 0 2px 0 rgba(255,255,255,0.78)`,
+          height:        cardH,
+          objectFit:     "contain",
+          pointerEvents: "none",
         }}
       />
 
-      <span
+      <img
+        src={item.iconPng}
+        alt=""
+        draggable={false}
         style={{
-          position: "absolute",
-          left: "50%",
-          top: 15 * scaleX,
-          transform: "translateX(-50%)",
-          width: 100 * scaleX,
-          height: 94 * scaleX,
-          borderRadius: 23 * scaleX,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: isSpecial
-            ? "radial-gradient(circle at 45% 30%, rgba(255,255,255,0.22), rgba(255,255,255,0.04) 62%, rgba(67,24,101,0.20) 100%)"
-            : "radial-gradient(circle at 45% 30%, rgba(255,255,255,0.92) 0%, rgba(255,245,215,0.56) 58%, rgba(142,87,39,0.12) 100%)",
-          border: "1px solid rgba(128,79,31,0.14)",
-          boxShadow: "inset 0 2px 0 rgba(255,255,255,0.56), 0 2px 4px rgba(75,45,18,0.10)",
+          position:      "absolute",
+          left:          "50%",
+          top:           iconTop,
+          transform:     "translateX(-50%)",
+          width:         iconSize,
+          height:        iconSize,
+          objectFit:     "contain",
+          pointerEvents: "none",
+          filter:        "drop-shadow(0 3px 3px rgba(82,42,14,0.20))",
         }}
-      >
-        <img
-          src={item.iconPng}
-          alt=""
-          draggable={false}
-          style={{
-            width: iconSize,
-            height: iconSize,
-            objectFit: "contain",
-            filter: "drop-shadow(0 3px 3px rgba(82,42,14,0.20))",
-          }}
-        />
-      </span>
+      />
 
       <span style={{
         position:      "absolute",
         left:          "50%",
-        bottom:        item.key === "infinite" ? 17 * scaleX : 20 * scaleX,
+        bottom:        item.key === "infinite" ? 19 * scaleX : 22 * scaleX,
         transform:     "translateX(-50%)",
-        width:         cardW - 20 * scaleX,
-        fontSize:      Math.max(10, (item.key === "infinite" ? 21 : 25) * scaleX),
+        width:         cardW - 16 * scaleX,
+        fontSize:      Math.max(10, (item.key === "infinite" ? 21 : 23) * scaleX),
         fontWeight:    900,
         color:         item.textColor,
         lineHeight:    item.key === "infinite" ? 1.02 : 1,
